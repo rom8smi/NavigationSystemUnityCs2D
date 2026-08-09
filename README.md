@@ -1,6 +1,8 @@
 # 2D Navigation System (Unity C#)
 
-This project contains implementation of the 2D navigation system which can be used for games or other visual 2D simulations. The system includes pathfinding, agents movement along their paths, agents local avoidance and obstacles of any shapes. The navigation system comes in two parts - grid and navigation mesh. The navigation mesh is more advanced and faster. The navigation mesh based system also benefits from fast constrained triangulation calculations when using derived and adapted Delaunator and Constrainautor libraries (see ThirdPartyNotices.md)
+This project contains implementation of the 2D navigation system which can be used for games or other visual 2D simulations. The system includes pathfinding, agents movement along their paths, agents local avoidance and obstacles of any shapes. The navigation system comes in two parts - grid and navigation mesh. The navigation mesh is more advanced and faster. The navigation mesh based system also benefits from fast constrained triangulation calculations when using derived and adapted Delaunator and Constrainautor libraries (see ThirdPartyNotices.md).
+
+There is also a C++ version of this project which uses Godot GDExtension. It can be found in https://github.com/rom8smi/NavigationSystemCpp2D.
 
 There are various example scenes set in the project to cover different kind of scenarios. Here are some examples of these.
 
