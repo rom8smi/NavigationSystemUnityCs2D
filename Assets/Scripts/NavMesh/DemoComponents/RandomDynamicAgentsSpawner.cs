@@ -41,8 +41,7 @@ namespace TriangulationNavigation
         {
             for (int i = 0; i < NavigationSystemComponent.active.navigationSystem.agents.Count; i++)
             {
-                if (!NavigationSystemComponent.active.navigationSystem.agents[i].followingPath &&
-                    !NavigationSystemComponent.active.navigationSystem.agents[i].searchPathLater)
+                if (!NavigationSystemComponent.active.navigationSystem.HasPath(i))
                 {
                     float probability = 0.001f;
                     float randomNumber = random.next_float();

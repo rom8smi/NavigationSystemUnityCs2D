@@ -52,34 +52,40 @@ namespace TriangulationNavigation
         public void Update(List<Transform> agentTransforms, float deltaTime)
         {
             if (use_debug_agents_mover)
-                {
-                    debugAgentsMover.MoveAgents(
-                        agentsMover,
-                        agents,
-                        agentPositions,
-                        agentTransforms,
-                        agentNeighbours,
-                        agentNeighbourCounts,
-                        agentTypes,
-                        largestAgentRadius,
-                        navMesh,
-                        pathfinding,
-                        deltaTime);
-                }
-                else
-                {
-                    agentsMover.MoveAgents(
-                        agents,
-                        agentPositions,
-                        agentTransforms,
-                        agentNeighbours,
-                        agentNeighbourCounts,
-                        agentTypes,
-                        largestAgentRadius,
-                        navMesh,
-                        pathfinding,
-                        deltaTime);
-                }
+            {
+                debugAgentsMover.MoveAgents(
+                    agentsMover,
+                    agents,
+                    agentPositions,
+                    agentTransforms,
+                    agentNeighbours,
+                    agentNeighbourCounts,
+                    agentTypes,
+                    largestAgentRadius,
+                    navMesh,
+                    pathfinding,
+                    deltaTime);
+            }
+            else
+            {
+                agentsMover.MoveAgents(
+                    agents,
+                    agentPositions,
+                    agentTransforms,
+                    agentNeighbours,
+                    agentNeighbourCounts,
+                    agentTypes,
+                    largestAgentRadius,
+                    navMesh,
+                    pathfinding,
+                    deltaTime);
+            }
+        }
+
+        public bool HasPath(int agentIndex)
+        {
+            return agents[agentIndex].followingPath ||
+                   agents[agentIndex].searchPathLater;
         }
     }
 }
