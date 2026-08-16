@@ -47,7 +47,7 @@ namespace BowyerWatsonTriangulationNamespace
 
             // if (div == 0.0f)
             // {
-            //     UnityEngine.Debug.Log("UpdateCircumcircle div is 0");
+            //     GenericCode.Debug.Log("UpdateCircumcircle div is 0");
             // }
 
             Float2 center = new Float2(aux1 / div, aux2 / div);

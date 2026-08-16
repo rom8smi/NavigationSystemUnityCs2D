@@ -61,11 +61,11 @@ namespace TriangulationNavigation
 
             // var sw = new Stopwatch();
             // sw.Start();
-            // UnityEngine.Debug.Log(allCorners.Count);
+            // GenericCode.Debug.Log(allCorners.Count);
 
             // UnionPolygonFinder.FindUnionsForMultiplePolygons(allCorners);
             
-            // UnityEngine.Debug.Log(sw.Elapsed.TotalMilliseconds);
+            // GenericCode.Debug.Log(sw.Elapsed.TotalMilliseconds);
 
             AABB bounds = new AABB
             {

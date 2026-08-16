@@ -44,7 +44,7 @@ namespace TriangulationNavigation
             int nDuplicatesFoundAfterRemoval1 = DuplicateUtils.FindDuplicatesCount(points, epsilon);
             int nDuplicatesFoundAfterRemoval2 = DuplicateUtils.FindDuplicatesCountKdTree(points, epsilon);
 
-            UnityEngine.Debug.Log(
+            GenericCode.Debug.Log(
                 $"FindDuplicatesTest: {nDuplicatesFoundBeforeRemoval1} {nDuplicatesFoundBeforeRemoval2} |" +
                 $" {nDuplicatesFoundAfterRemoval1} {nDuplicatesFoundAfterRemoval2} |" +
                 $" {nDuplicates}");

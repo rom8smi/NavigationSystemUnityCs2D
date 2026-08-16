@@ -130,7 +130,7 @@ namespace TriangulationNavigation
 
             randomIntersectionsData.intersectionPoints.Clear();
 
-            UnityEngine.Debug.Log($"{n} | {count1} {count2} | {t1} {t2} | {count1 == count2} {failedMatches}");
+            GenericCode.Debug.Log($"{n} | {count1} {count2} | {t1} {t2} | {count1 == count2} {failedMatches}");
         }
 
         void OnDrawGizmos()

@@ -206,7 +206,7 @@ namespace TriangulationNavigation
                 }
             }
 
-            UnityEngine.Debug.Log(
+            GenericCode.Debug.Log(
                 missmatchesFindTriangleForPointWithBox + " " + missmatchesFindTriangleForPointByWalking + " " + missmatchesFindTriangleForPointByKdTree + " " + missmatchesFindTriangleForPointGrid + " " + missmatchesFindTriangleForPointGridSearch +
                 " | " + t1 + " " + (t2 - t1) + " " + (t3 - t2) + " " + (t4 - t3) + " " + (t5 - t4) + " " + (t6 - t5) +
                 " | " + nVisitsFindTriangleForPoint + " " + nVisitsFindTriangleForPointWithBox + " " + visitsDirectWalking + " " + visitsWithKdTree + " " + visitsGrid);

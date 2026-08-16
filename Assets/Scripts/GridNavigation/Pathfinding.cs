@@ -62,11 +62,11 @@ namespace GridNavigation
 
             if (!grid.nodes[startNode].walkable)
             {
-                UnityEngine.Debug.Log($"Start not walkable {startNode}");
+                GenericCode.Debug.Log($"Start not walkable {startNode}");
             }
             if (!grid.nodes[targetNode].walkable)
             {
-                UnityEngine.Debug.Log($"Target not walkable {targetNode}");
+                GenericCode.Debug.Log($"Target not walkable {targetNode}");
             }
 
             int lowestHCostNode = startNode;

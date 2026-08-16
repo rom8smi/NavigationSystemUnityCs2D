@@ -73,7 +73,7 @@ namespace DelaunatorSharp
                 if (edg == -1)
                 {
                     // This is sometimes randomly happening
-                    UnityEngine.Debug.Log($"ConstrainOne edg == -1 {iLoop} {loopMax}");
+                    Debug.Log($"ConstrainOne edg == -1 {iLoop} {loopMax}");
                     return;
                 }
 
@@ -120,10 +120,38 @@ namespace DelaunatorSharp
                     return;
                 }
 
+                Debug.IndexAssert(edg, del.halfedges.Count, "bbb6");
+                if (edg < 0)
+                {
+                    return;
+                }
+
                 int adj = del.halfedges[edg];
                 int bot = PrevEdge(edg);
                 int top = PrevEdge(adj);
                 int rgt = NextEdge(adj);
+
+                Debug.IndexAssert(edg, del.triangles.Count, "bbb7");
+                Debug.IndexAssert(adj, del.triangles.Count, "bbb8");
+
+                if (adj < 0)
+                {
+                    return;
+                }
+
+                Debug.IndexAssert(bot, del.triangles.Count, "bbb9");
+
+                if (bot < 0)
+                {
+                    return;
+                }
+
+                Debug.IndexAssert(top, del.triangles.Count, "bbb10");
+
+                if (top < 0)
+                {
+                    return;
+                }
 
                 bool convex = IntersectSegments(
                     del.triangles[edg],
@@ -144,7 +172,7 @@ namespace DelaunatorSharp
                     {
                         if (edg == rescan)
                         {
-                            UnityEngine.Debug.Log("Infinite loop: non-convex quadrilateral");
+                            Debug.Log("Infinite loop: non-convex quadrilateral");
                             return;
                         }
                         edg = rescan;
@@ -162,7 +190,7 @@ namespace DelaunatorSharp
                     }
                     else if (rescan == edg)
                     {
-                        // UnityEngine.Debug.Log("Infinite loop: no further intersect after non-convex");
+                        // Debug.Log("Infinite loop: no further intersect after non-convex");
                         return;
                     }
 
@@ -179,7 +207,7 @@ namespace DelaunatorSharp
                     }
                     if (rescan == bot)
                     {
-                        // UnityEngine.Debug.Log("Infinite loop: flipped diagonal still intersects");
+                        // Debug.Log("Infinite loop: flipped diagonal still intersects");
                         return;
                     }
                 }
@@ -298,7 +326,7 @@ namespace DelaunatorSharp
 
             if (consd.Has(edg))
             {
-                // UnityEngine.Debug.Log("Trying to flip a constrained edge");
+                // Debug.Log("Trying to flip a constrained edge");
                 return;
             }
 

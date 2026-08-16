@@ -195,7 +195,7 @@ namespace GridNavigation
                     result += $"Obstacle {i} - center ({center.x}, {center.y}) | size ({size.x}, {size.y})\n";
                 }
 
-                UnityEngine.Debug.Log(result);
+                GenericCode.Debug.Log(result);
             }
         }
 
@@ -212,7 +212,7 @@ namespace GridNavigation
                     result += $"PenaltyObstacles {i} - center ({center.x}, {center.y}) | size ({size.x}, {size.y})\n";
                 }
 
-                UnityEngine.Debug.Log(result);
+                GenericCode.Debug.Log(result);
             }
         }
 

@@ -74,7 +74,7 @@ namespace TriangulationNavigation
                     Write(t1, t2 - t1, t3 - t2, t4 - t3, t5 - t4);
 
                     currentCount++;
-                    UnityEngine.Debug.Log("Written: " + (currentCount * 100f / maxCount).ToString() + " %");
+                    GenericCode.Debug.Log("Written: " + (currentCount * 100f / maxCount).ToString() + " %");
 
                     if (currentCount >= maxCount)
                     {
@@ -84,7 +84,7 @@ namespace TriangulationNavigation
             }
             else
             {
-                UnityEngine.Debug.Log($"{t1} {t2 - t1} {t3 - t2} {t4 - t3} {t5 - t4}");
+                GenericCode.Debug.Log($"{t1} {t2 - t1} {t3 - t2} {t4 - t3} {t5 - t4}");
             }
         }
 

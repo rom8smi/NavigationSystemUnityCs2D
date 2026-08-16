@@ -30,7 +30,7 @@ namespace GridNavigation
 
                 CreateNavigationGrid();
 
-                UnityEngine.Debug.Log($"CreateNavigationGrid time {sw.Elapsed.TotalMilliseconds}");
+                GenericCode.Debug.Log($"CreateNavigationGrid time {sw.Elapsed.TotalMilliseconds}");
             }
         }
 
@@ -75,7 +75,7 @@ namespace GridNavigation
                 result += $"({path.waypoints[i].x}, {path.waypoints[i].y})\n";
             }
 
-            UnityEngine.Debug.Log(result);
+            GenericCode.Debug.Log(result);
         }
 
         Obstacle[] GetObstacles()

@@ -22,7 +22,7 @@ namespace TriangulationNavigation
 
             outputResult += "--------------------------";
 
-            UnityEngine.Debug.Log(outputResult);
+            GenericCode.Debug.Log(outputResult);
         }
 
         public static DelaunatorStatistics GetDelaunatorStatistics(Delaunator triangulation, List<Float2> points)

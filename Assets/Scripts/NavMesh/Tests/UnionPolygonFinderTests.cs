@@ -34,7 +34,7 @@ namespace TriangulationNavigation
 
             int correctness = AreTheSame(allCornersWithUnionRegular, allCornersWithUnionNoBoundsCheck);
 
-            UnityEngine.Debug.Log(
+            GenericCode.Debug.Log(
                 runningTimeRegular.ToString() + " " +
                 runningTimeNoBoundsCheck.ToString() + " " +
                 correctness.ToString()

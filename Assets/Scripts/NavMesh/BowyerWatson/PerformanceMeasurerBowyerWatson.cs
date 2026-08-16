@@ -35,7 +35,7 @@ public class PerformanceMeasurerBowyerWatson : MonoBehaviour
             Write();
             currentCount++;
 
-            Debug.Log("Written: " + (currentCount * 100f / maxCount).ToString() + " %");
+            GenericCode.Debug.Log("Written: " + (currentCount * 100f / maxCount).ToString() + " %");
 
             if (currentCount >= maxCount)
             {

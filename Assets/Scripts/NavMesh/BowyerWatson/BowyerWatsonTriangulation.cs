@@ -136,7 +136,7 @@ namespace BowyerWatsonTriangulationNamespace
                 triangulation.Remove(t);
             }
 
-            // UnityEngine.Debug.Log($"{badTrianglesFoundCount} {trianglesVisitedCount} {(1f * badTrianglesFoundCount) / trianglesVisitedCount}");
+            // GenericCode.Debug.Log($"{badTrianglesFoundCount} {trianglesVisitedCount} {(1f * badTrianglesFoundCount) / trianglesVisitedCount}");
         }
 
         private List<Edge> FindHoleBoundaries(List<Triangle> badTriangles)

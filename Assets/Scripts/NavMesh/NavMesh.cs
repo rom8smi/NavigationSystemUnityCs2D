@@ -965,7 +965,7 @@ namespace TriangulationNavigation
             int duplicateCount = DuplicateUtils.FindDuplicatesCountKdTree(newPoints, epsilon);
             if (duplicateCount > 0)
             {
-                UnityEngine.Debug.Log($"duplicateCount: {duplicateCount}");
+                GenericCode.Debug.Log($"duplicateCount: {duplicateCount}");
             }
         }
 
@@ -981,7 +981,7 @@ namespace TriangulationNavigation
                     {
                         if ((p == constraintEdges[j].p && q == constraintEdges[j].q) || (p == constraintEdges[j].q && q == constraintEdges[j].p))
                         {
-                            UnityEngine.Debug.Log($"DuplicateLineSegmentsTest: {i} {j}");
+                            GenericCode.Debug.Log($"DuplicateLineSegmentsTest: {i} {j}");
                         }
                     }
                 }

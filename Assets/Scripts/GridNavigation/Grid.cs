@@ -240,7 +240,7 @@ namespace GridNavigation
 
             if (nodeIndex < 0 || nodeIndex >= nodes.Length)
             {
-                UnityEngine.Debug.Log($"{nodeIndex} {nodes.Length}");
+                GenericCode.Debug.Log($"{nodeIndex} {nodes.Length}");
             }
 
             if (nodes[nodeIndex].walkable)

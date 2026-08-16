@@ -108,6 +108,7 @@
      <Compile Include="Assets/Scripts/NavMesh/Agent.cs" />
      <Compile Include="Assets/Scripts/NavMesh/PathfindingNode.cs" />
      <Compile Include="Assets/Scripts/NavMesh/AgentsMover.cs" />
+     <Compile Include="Assets/Scripts/Debug/Debug.cs" />
      <Compile Include="Assets/Scripts/NavMesh/DemoComponents/WalkableObstacleMonobehaviour.cs" />
      <Compile Include="Assets/Scripts/NavMesh/TriangulationGridSearch.cs" />
      <Compile Include="Assets/Scripts/NavMesh/DemoComponents/CameraController.cs" />

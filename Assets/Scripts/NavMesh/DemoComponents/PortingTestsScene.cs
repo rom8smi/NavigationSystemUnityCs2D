@@ -30,7 +30,7 @@ namespace TriangulationNavigation
             sw.Start();
             delaunator.Create(points);
 
-            UnityEngine.Debug.Log("Number of points: " + delaunator.GetTriangles().Count + ", Calculation time: " + sw.Elapsed.TotalMilliseconds + " ms");
+            GenericCode.Debug.Log("Number of points: " + delaunator.GetTriangles().Count + ", Calculation time: " + sw.Elapsed.TotalMilliseconds + " ms");
             DelaunatorDebugger.DebugDelaunatorStatistics(delaunator, points);
         }
 
@@ -102,7 +102,7 @@ namespace TriangulationNavigation
             sw.Start();
             Path path = pathfinding.FindPath(startPosition, targetPosition, nav_mesh);
 
-            UnityEngine.Debug.Log("Number of points: " + nav_mesh.allPoints.Count + " " + path.waypoints.Count + " " + sw.Elapsed.TotalMilliseconds);
+            GenericCode.Debug.Log("Number of points: " + nav_mesh.allPoints.Count + " " + path.waypoints.Count + " " + sw.Elapsed.TotalMilliseconds);
         }
     }
 }

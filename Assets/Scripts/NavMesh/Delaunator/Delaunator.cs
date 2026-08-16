@@ -69,7 +69,7 @@ namespace DelaunatorSharp
 
             if (n < 3)
             {
-                UnityEngine.Debug.Log("Need at least 3 points");
+                GenericCode.Debug.Log("Need at least 3 points");
                 return;
             }
 
@@ -187,7 +187,7 @@ namespace DelaunatorSharp
 
             if (minRadius == float.PositiveInfinity)
             {
-                UnityEngine.Debug.Log("No Delaunay triangulation exists for this input.");
+                GenericCode.Debug.Log("No Delaunay triangulation exists for this input.");
                 return;
             }
 

@@ -73,7 +73,7 @@ namespace TriangulationNavigation
                 int t = FindTriangleForPointByKdTree(position, p_delaunator, p_delaunatorPoints, p_triangles, p_triangleBounds, p_triangleCentroids);
                 if(d)
                 {
-                    UnityEngine.Debug.Log($"aaa21 {t}");
+                    GenericCode.Debug.Log($"aaa21 {t}");
                 }
                 return t;
             }
@@ -89,7 +89,7 @@ namespace TriangulationNavigation
                 int t = FindTriangleForPointByKdTree(position, p_delaunator, p_delaunatorPoints, p_triangles, p_triangleBounds, p_triangleCentroids, d);
                 if(d)
                 {
-                    UnityEngine.Debug.Log($"aaa22 {t}");
+                    GenericCode.Debug.Log($"aaa22 {t}");
                 }
                 return t;
             }
@@ -97,7 +97,7 @@ namespace TriangulationNavigation
             int t1 = FindTriangleForPointByWalking(position, initialTriangle, p_delaunator, p_delaunatorPoints, p_triangles, p_triangleBounds, p_triangleCentroids);
             if(d)
             {
-                UnityEngine.Debug.Log($"aaa23 {t1}");
+                GenericCode.Debug.Log($"aaa23 {t1}");
             }
             return t1;
         }
@@ -116,7 +116,7 @@ namespace TriangulationNavigation
 
             if(d)
             {
-                UnityEngine.Debug.Log($"aaa31 {initialTriangle} {t}");
+                GenericCode.Debug.Log($"aaa31 {initialTriangle} {t}");
             }
 
             return t;
@@ -142,7 +142,7 @@ namespace TriangulationNavigation
 
                 if(d)
                 {
-                    UnityEngine.Debug.Log($"aaa41 {triangle}");
+                    GenericCode.Debug.Log($"aaa41 {triangle}");
                 }
 
                 if (p_triangleBounds[triangle].IsInsideOrOnTheBoundary(position))
@@ -171,7 +171,7 @@ namespace TriangulationNavigation
 
                     if(d)
                     {
-                        UnityEngine.Debug.Log($"aaa42 {opposite}");
+                        GenericCode.Debug.Log($"aaa42 {opposite}");
                     }
 
                     if (opposite >= 0)
@@ -184,8 +184,8 @@ namespace TriangulationNavigation
 
                             if(d)
                             {
-                                UnityEngine.Debug.Log($"aaa43 {VectorUtils.AreLineSegmentsIntersecting(position, center, p_delaunatorPoints[p], p_delaunatorPoints[q])}");
-                                UnityEngine.Debug.Log($"aaa44 {VectorUtils.PointOnLine2D(position, p_delaunatorPoints[p], p_delaunatorPoints[q], 0.0001f)} {VectorUtils.PointOnLine2D(center, p_delaunatorPoints[p], p_delaunatorPoints[q], 0.0001f)}");
+                                GenericCode.Debug.Log($"aaa43 {VectorUtils.AreLineSegmentsIntersecting(position, center, p_delaunatorPoints[p], p_delaunatorPoints[q])}");
+                                GenericCode.Debug.Log($"aaa44 {VectorUtils.PointOnLine2D(position, p_delaunatorPoints[p], p_delaunatorPoints[q], 0.0001f)} {VectorUtils.PointOnLine2D(center, p_delaunatorPoints[p], p_delaunatorPoints[q], 0.0001f)}");
                             }
 
                             if (VectorUtils.AreLineSegmentsIntersecting(position, center, p_delaunatorPoints[p], p_delaunatorPoints[q]))

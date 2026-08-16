@@ -115,7 +115,7 @@ namespace TriangulationNavigation
 
             if (nodesCount != navMesh.allPoints.Count)
             {
-                UnityEngine.Debug.Log($"Pathfinding nodes and triangulation points count does not match: {nodesCount}, {navMesh.allPoints.Count}");
+                GenericCode.Debug.Log($"Pathfinding nodes and triangulation points count does not match: {nodesCount}, {navMesh.allPoints.Count}");
             }
 
             List<Path> paths = new List<Path>();
@@ -173,7 +173,7 @@ namespace TriangulationNavigation
 
             if (nodesCount != navMesh.allPoints.Count)
             {
-                UnityEngine.Debug.Log($"Pathfinding nodes and triangulation points count does not match: {nodesCount}, {navMesh.allPoints.Count}");
+                GenericCode.Debug.Log($"Pathfinding nodes and triangulation points count does not match: {nodesCount}, {navMesh.allPoints.Count}");
             }
             Path path = FindPathToExactTarget(startPos, targetPos, navMesh);
             ClearPathSearch();

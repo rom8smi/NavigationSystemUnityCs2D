@@ -23,7 +23,7 @@ namespace TriangulationNavigation
                 }
             }
 
-            UnityEngine.Debug.Log(invalidCount);
+            GenericCode.Debug.Log(invalidCount.ToString());
         }
 
         public static void ValidateConstraintEdges(Delaunator del, List<ConstraintEdge> constraintEdges)
@@ -57,7 +57,7 @@ namespace TriangulationNavigation
                 }
             }
 
-            UnityEngine.Debug.Log($"{invalidCount} {numPoints} {constraintEdges.Count}");
+            GenericCode.Debug.Log($"{invalidCount} {numPoints} {constraintEdges.Count}");
         }
 
         static bool IsPointOnLineSegment(Float2 linePointA, Float2 linePointB, Float2 point)
