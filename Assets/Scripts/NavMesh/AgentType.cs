@@ -4,6 +4,7 @@ namespace TriangulationNavigation
     public struct AgentType
     {
         public float radius;
+        public bool isStatic;
         public float speed;
     }
 }

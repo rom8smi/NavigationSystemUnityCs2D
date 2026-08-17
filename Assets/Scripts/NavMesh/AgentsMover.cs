@@ -325,7 +325,10 @@ namespace TriangulationNavigation
                 agents[i].localAvoidanceVelocity = avoidanceVelocity;
                 agents[i].powerFactorSum = powerFactorSum;
 
-                CalculateFinalVelocities(agents, agentPositions, agentTransforms, deltaTime, navMesh, i);
+                if (!agentTypes[agentTypeIndex].isStatic)
+                {
+                    CalculateFinalVelocities(agents, agentPositions, agentTransforms, deltaTime, navMesh, i);
+                }
             }
         }
 
