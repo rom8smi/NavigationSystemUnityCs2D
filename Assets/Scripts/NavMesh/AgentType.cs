@@ -6,5 +6,6 @@ namespace TriangulationNavigation
         public float radius;
         public bool isStatic;
         public float speed;
+        public bool softLocalAvoidance;
     }
 }

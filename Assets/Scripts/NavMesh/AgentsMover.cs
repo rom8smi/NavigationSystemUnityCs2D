@@ -284,6 +284,8 @@ namespace TriangulationNavigation
             {
                 Float2 agentPosition = agentPositions[i];
                 Float2 avoidanceVelocity = Float2.Zero();
+                Float2 softAvoidanceVelocity = Float2.Zero();
+                bool hasSoftAvoidance = false;
                 float powerFactorSum = 0.0f;
                 int agentTypeIndex = agents[i].agentTypeIndex;
                 float radius = agentTypes[agentTypeIndex].radius;
@@ -312,14 +314,29 @@ namespace TriangulationNavigation
 
                     if (normalizedDistanceSquare < 1.0f)
                     {
-                        float powerFactor = 1.0f;
-                        for (int l = 0; l < localAvoidancePowerFactor; l++)
+                        if (agentTypes[neighbourAgentTypeIndex].softLocalAvoidance)
                         {
-                            powerFactor *= normalizedDistanceSquare;
+                            softAvoidanceVelocity += relative.Normalized();
+                            hasSoftAvoidance = true;
                         }
-                        avoidanceVelocity += relative.Normalized() / powerFactor;
-                        powerFactorSum += 1.0f / powerFactor;
+                        else
+                        {
+                            float powerFactor = 1.0f;
+                            for (int l = 0; l < localAvoidancePowerFactor; l++)
+                            {
+                                powerFactor *= normalizedDistanceSquare;
+                            }
+                            avoidanceVelocity += relative.Normalized() / powerFactor;
+                            powerFactorSum += 1.0f / powerFactor;
+                        }
                     }
+                }
+
+                if (hasSoftAvoidance)
+                {
+                    softAvoidanceVelocity.Normalize();
+                    softAvoidanceVelocity = softAvoidanceVelocity * (agents[i].pathVelocity.Length() * 0.8f);
+                    avoidanceVelocity += softAvoidanceVelocity;
                 }
 
                 agents[i].localAvoidanceVelocity = avoidanceVelocity;
