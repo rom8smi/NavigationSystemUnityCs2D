@@ -11,6 +11,7 @@ namespace TriangulationNavigation
         List<PathfindingNode> nodes;
         public List<Float2> nodePositions;
         public List<List<int>> nodeNeighbours;
+        List<int> nodeEdgeRefs;
         List<float> additionalCosts;
         List<bool> additionalCostsModified;
         List<int> addedAdditionalCosts;
@@ -25,6 +26,7 @@ namespace TriangulationNavigation
             nodes = new List<PathfindingNode>();
             nodePositions = new List<Float2>();
             nodeNeighbours = new List<List<int>>();
+            nodeEdgeRefs = new List<int>();
             additionalCosts = new List<float>();
             additionalCostsModified = new List<bool>();
             addedAdditionalCosts = new List<int>();
@@ -94,7 +96,6 @@ namespace TriangulationNavigation
             additionalCosts.Clear();
             additionalCostsModified.Clear();
 
-            List<int> nodeEdgeRefs = new List<int>();
             nodeEdgeRefs.Resize(navMesh.delaunator.trianglesLen);
 
             for (int i = 0; i < navMesh.delaunator.trianglesLen; i++)
@@ -106,7 +107,7 @@ namespace TriangulationNavigation
             {
                 List<int> walkableIndices = new List<int>();
                 List<bool> repetitive = new List<bool>();
-                
+
                 for (int i = 0; i < 3; i++)
                 {
                     int e = t * 3 + i;
@@ -185,14 +186,14 @@ namespace TriangulationNavigation
 
             nodesCount = nodes.Count;
 
-            // for (int i = 0; i < 2; i++)
-            // {
-            //     nodes.Add(new PathfindingNode());
-            //     nodePositions.Add(Float2.Zero());
-            //     nodeNeighbours.Add(new List<int>());
-            //     additionalCosts.Add(0.0f);
-            //     additionalCostsModified.Add(false);
-            // }
+            for (int i = 0; i < 2; i++)
+            {
+                nodes.Add(new PathfindingNode());
+                nodePositions.Add(Float2.Zero());
+                nodeNeighbours.Add(new List<int>());
+                additionalCosts.Add(0.0f);
+                additionalCostsModified.Add(false);
+            }
         }
 
         public Path FindPath(Float2 startPos, Float2 targetPos, NavMesh navMesh)
@@ -560,6 +561,50 @@ namespace TriangulationNavigation
         }
 
         int UpdatePositionNode(Float2 position, NavMesh navMesh, int nodeIndex)
+        {
+            int triangle = navMesh.FindWalkableTriangleForPoint(position);
+
+            if (triangle != -1 && navMesh.trianglesWalkability[triangle] != -1)
+            {
+                triangle = -1;
+            }
+
+            PathfindingNode node = new PathfindingNode
+            {
+                gCost = 0,
+                hCost = 0,
+                parent = -1,
+                heapIndex = -1,
+                isInClosedSet = false
+            };
+            List<int> neighbours = new List<int>();
+
+            if (triangle != -1)
+            {
+                for (int i = 0; i < 3; i++)
+                {
+                    int e = 3 * triangle + i;
+                    int opposite = navMesh.delaunator.halfedges[e];
+
+                    if (opposite != -1)
+                    {
+                        if (navMesh.trianglesWalkability[Delaunator.TriangleOfEdge(e)] == -1 &&
+                        navMesh.trianglesWalkability[Delaunator.TriangleOfEdge(opposite)] == -1)
+                        {
+                            neighbours.Add(nodeEdgeRefs[e]);
+                            nodeNeighbours[nodeEdgeRefs[e]].Add(nodeIndex);
+                        }
+                    }
+                }
+            }
+
+            nodes[nodeIndex] = node;
+            nodePositions[nodeIndex] = position;
+            nodeNeighbours[nodeIndex] = neighbours;
+            return triangle;
+        }
+
+        int UpdatePositionNode2(Float2 position, NavMesh navMesh, int nodeIndex)
         {
             int triangle = navMesh.FindWalkableTriangleForPoint(position);
 
