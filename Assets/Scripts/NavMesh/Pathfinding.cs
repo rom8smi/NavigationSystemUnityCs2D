@@ -12,6 +12,7 @@ namespace TriangulationNavigation
         public List<Float2> nodePositions;
         public List<List<int>> nodeNeighbours;
         List<int> nodeEdgeRefs;
+        List<int> nodeEdgeRefsInverted;
         List<float> additionalCosts;
         List<bool> additionalCostsModified;
         List<int> addedAdditionalCosts;
@@ -28,6 +29,7 @@ namespace TriangulationNavigation
             nodePositions = new List<Float2>();
             nodeNeighbours = new List<List<int>>();
             nodeEdgeRefs = new List<int>();
+            nodeEdgeRefsInverted = new List<int>();
             additionalCosts = new List<float>();
             additionalCostsModified = new List<bool>();
             addedAdditionalCosts = new List<int>();
@@ -110,6 +112,7 @@ namespace TriangulationNavigation
             nodeNeighbours.Clear();
             additionalCosts.Clear();
             additionalCostsModified.Clear();
+            nodeEdgeRefsInverted.Clear();
 
             nodeEdgeRefs.Resize(navMesh.delaunator.trianglesLen);
 
@@ -182,6 +185,7 @@ namespace TriangulationNavigation
                         nodeNeighbours.Add(new List<int>());
                         additionalCosts.Add(0.0f);
                         additionalCostsModified.Add(false);
+                        nodeEdgeRefsInverted.Add(e);
                         nodeEdgeRefs[e] = currentNodesCount;
                         nodeEdgeRefs[opposite] = currentNodesCount;
                     }
@@ -208,6 +212,7 @@ namespace TriangulationNavigation
                 nodeNeighbours.Add(new List<int>());
                 additionalCosts.Add(0.0f);
                 additionalCostsModified.Add(false);
+                nodeEdgeRefsInverted.Add(-1);
             }
         }
 
@@ -241,9 +246,9 @@ namespace TriangulationNavigation
                 targetPos = navMesh.TryMoveToWalkableArea(targetPos).position;
             }
 
-            if (nodesCount != navMesh.allPoints.Count)
+            if (!triangleEdgesMode && nodesCount != navMesh.allPoints.Count)
             {
-                GenericCode.Debug.Log($"Pathfinding nodes and triangulation points count does not match: {nodesCount}, {navMesh.allPoints.Count}");
+                Debug.Log($"Pathfinding nodes and triangulation points count does not match: {nodesCount}, {navMesh.allPoints.Count}");
             }
 
             List<Path> paths = new List<Path>();
@@ -414,10 +419,12 @@ namespace TriangulationNavigation
 
             if (pathSuccess)
             {
-                RetracePath(waypoints, startNode, targetNode);
+                List<int> waypointIndices = new List<int>();
+                RetracePath(waypoints, waypointIndices, startNode, targetNode);
+
                 if (triangleEdgesMode)
                 {
-                    SimplifyPathEdges(waypoints, navMesh);
+                    SimplifyPathEdges(waypoints, waypointIndices, navMesh);
                 }
                 else
                 {
@@ -480,7 +487,7 @@ namespace TriangulationNavigation
             addedAdditionalCosts.Clear();
         }
 
-        void RetracePath(List<Float2> waypoints, int startNode, int endNode)
+        void RetracePath(List<Float2> waypoints, List<int> waypointIndices, int startNode, int endNode)
         {
             int currentNode = endNode;
             Float2 waypointPosition;
@@ -489,15 +496,352 @@ namespace TriangulationNavigation
             {
                 waypointPosition = nodePositions[currentNode];
                 waypoints.Add(waypointPosition);
+                waypointIndices.Add(currentNode);
                 currentNode = nodes[currentNode].parent;
             }
 
             waypointPosition = nodePositions[startNode];
             waypoints.Add(waypointPosition);
+            waypointIndices.Add(startNode);
         }
 
-        void SimplifyPathEdges(List<Float2> waypoints, NavMesh navMesh)
+        void SimplifyPathEdges(List<Float2> waypoints, List<int> waypointIndices, NavMesh navMesh)
         {
+            if (waypointIndices.Count < 3)
+            {
+                return;
+            }
+
+            List<Float2> leftPortalsEges = new List<Float2>();
+            List<Float2> rightPortalsEges = new List<Float2>();
+
+            leftPortalsEges.Resize(waypointIndices.Count);
+            rightPortalsEges.Resize(waypointIndices.Count);
+
+            leftPortalsEges[0] = nodePositions[waypointIndices[0]];
+            rightPortalsEges[0] = nodePositions[waypointIndices[0]];
+
+            leftPortalsEges[waypointIndices.Count - 1] = nodePositions[waypointIndices[waypointIndices.Count - 1]];
+            rightPortalsEges[waypointIndices.Count - 1] = nodePositions[waypointIndices[waypointIndices.Count - 1]];
+
+            for (int i = 0; i < waypointIndices.Count - 2; i++)
+            {
+                int waypointIndex = waypointIndices[i + 1];
+                int edgeIndex = nodeEdgeRefsInverted[waypointIndex];
+
+                Float2 pathDirectionA = (nodePositions[waypointIndex] - nodePositions[waypointIndices[i]]).Normalized();
+                Float2 pathDirectionB = (nodePositions[waypointIndices[i + 2]] - nodePositions[waypointIndex]).Normalized();
+
+                Float2 pathDirection = (pathDirectionA + pathDirectionB) * 0.5f;
+
+                int p = navMesh.delaunator.triangles[edgeIndex];
+                int q = navMesh.delaunator.triangles[Delaunator.NextHalfedge(edgeIndex)];
+
+                Float2 pPoint = navMesh.allPoints[p];
+                Float2 perpendicularDirection = pPoint - nodePositions[waypointIndex];
+
+                if (pathDirection.Cross(perpendicularDirection) < 0.0f)
+                {
+                    perpendicularDirection = -perpendicularDirection;
+                }
+
+                Float2 leftPortalEdge = nodePositions[waypointIndex] - perpendicularDirection;
+                Float2 rightPortalEdge = nodePositions[waypointIndex] + perpendicularDirection;
+
+                leftPortalsEges[i + 1] = leftPortalEdge;
+                rightPortalsEges[i + 1] = rightPortalEdge;
+            }
+
+            List<Float2> simplifiedWaypoints = new List<Float2>();
+            SimplifyPath2(waypoints, leftPortalsEges, rightPortalsEges, simplifiedWaypoints);
+
+            waypoints.Clear();
+            for (int i = 0; i < simplifiedWaypoints.Count; i++)
+            {
+                waypoints.Add(simplifiedWaypoints[i]);
+            }
+        }
+
+        public void SimplifyPath2(
+        List<Float2> waypoints,
+        List<Float2> leftPortalsEges,
+        List<Float2> rightPortalsEges,
+        List<Float2> simplifiedWaypoints)
+        {
+            Float2 startPos = waypoints[0];
+            Float2 endPos = waypoints[waypoints.Count - 1];
+
+            simplifiedWaypoints.Add(startPos);
+
+            // Initialize funnel state
+            Float2 portalApex = startPos;
+            Float2 portalLeft = startPos;
+            Float2 portalRight = startPos;
+
+            int apexIndex = 0;
+            int leftIndex = 0;
+            int rightIndex = 0;
+
+            int totalPoints = leftPortalsEges.Count;
+
+            for (int i = 1; i < totalPoints; i++)
+            {
+                Float2 left = leftPortalsEges[i];
+                Float2 right = rightPortalsEges[i];
+
+                // 1. Update Right side of funnel
+                if (TriArea2(portalApex, portalRight, right) <= 0.0f)
+                {
+                    if ((portalApex.x == portalRight.x && portalApex.y == portalRight.y) || TriArea2(portalApex, portalLeft, right) > 0.0f)
+                    {
+                        // Tighten right wall
+                        portalRight = right;
+                        rightIndex = i;
+                    }
+                    else
+                    {
+                        // Right wall crossed Left wall -> add left apex corner to path and restart funnel
+                        simplifiedWaypoints.Add(portalLeft);
+                        portalApex = portalLeft;
+                        apexIndex = leftIndex;
+
+                        // Reset funnel to new apex
+                        portalLeft = portalApex;
+                        portalRight = portalApex;
+                        leftIndex = apexIndex;
+                        rightIndex = apexIndex;
+
+                        i = apexIndex;
+                        continue;
+                    }
+                }
+
+                // 2. Update Left side of funnel
+                if (TriArea2(portalApex, portalLeft, left) >= 0.0f)
+                {
+                    if ((portalApex.x == portalLeft.x && portalApex.y == portalLeft.y) || TriArea2(portalApex, portalRight, left) < 0.0f)
+                    {
+                        // Tighten left wall
+                        portalLeft = left;
+                        leftIndex = i;
+                    }
+                    else
+                    {
+                        // Left wall crossed Right wall -> add right apex corner to path and restart funnel
+                        simplifiedWaypoints.Add(portalRight);
+                        portalApex = portalRight;
+                        apexIndex = rightIndex;
+
+                        // Reset funnel to new apex
+                        portalRight = portalApex;
+                        portalLeft = portalApex;
+                        rightIndex = apexIndex;
+                        leftIndex = apexIndex;
+
+                        i = apexIndex;
+                        continue;
+                    }
+                }
+            }
+
+            // Ensure the final target position is appended
+            if (simplifiedWaypoints[simplifiedWaypoints.Count - 1].x != endPos.x && simplifiedWaypoints[simplifiedWaypoints.Count - 1].y != endPos.y)
+            {
+                simplifiedWaypoints.Add(endPos);
+            }
+        }
+
+        float Cross(Float2 a, Float2 b)
+        {
+            return a.x * b.y - a.y * b.x;
+        }
+
+        float TriArea2(Float2 a, Float2 b, Float2 c)
+        {
+            return Cross(b - a, c - a);
+        }
+
+        void SimplifyPathEdges1(List<Float2> waypoints, List<int> waypointIndices, NavMesh navMesh)
+        {
+            if (waypointIndices.Count <= 2)
+            {
+                return;
+            }
+
+            List<Float2> corridor = new List<Float2>();
+            for (int i = waypoints.Count - 1; i >= 0; i--)
+            {
+                corridor.Add(waypoints[i]);
+            }
+
+            List<Float2> portalLeft = new List<Float2>();
+            List<Float2> portalRight = new List<Float2>();
+            portalLeft.Add(corridor[0]);
+            portalRight.Add(corridor[0]);
+
+            for (int i = 1; i < corridor.Count - 1; i++)
+            {
+                int nodeIndex = -1;
+                for (int j = 0; j < nodePositions.Count; j++)
+                {
+                    if (SamePoint(nodePositions[j], corridor[i]))
+                    {
+                        nodeIndex = j;
+                        break;
+                    }
+                }
+
+                int edgeIndex = -1;
+                for (int j = 0; j < nodeEdgeRefs.Count; j++)
+                {
+                    if (nodeEdgeRefs[j] == nodeIndex)
+                    {
+                        edgeIndex = j;
+                        break;
+                    }
+                }
+
+                if (edgeIndex == -1)
+                {
+                    return;
+                }
+
+                int p = navMesh.delaunator.triangles[edgeIndex];
+                int q = navMesh.delaunator.triangles[Delaunator.NextHalfedge(edgeIndex)];
+                Float2 portalP = navMesh.allPoints[p];
+                Float2 portalQ = navMesh.allPoints[q];
+                Float2 travelDirection = corridor[i + 1] - corridor[i - 1];
+
+                if (SignedArea2(corridor[i - 1], corridor[i - 1] + travelDirection, portalP) > 0.0f)
+                {
+                    portalLeft.Add(portalP);
+                    portalRight.Add(portalQ);
+                }
+                else
+                {
+                    portalLeft.Add(portalQ);
+                    portalRight.Add(portalP);
+                }
+            }
+
+            portalLeft.Add(corridor[corridor.Count - 1]);
+            portalRight.Add(corridor[corridor.Count - 1]);
+
+            List<Float2> funnelPath = new List<Float2>();
+            Float2 apex = portalLeft[0];
+            Float2 left = apex;
+            Float2 right = apex;
+            int apexIndex = 0;
+            int leftIndex = 0;
+            int rightIndex = 0;
+            funnelPath.Add(apex);
+
+            for (int i = 1; i < portalLeft.Count; i++)
+            {
+                Float2 newLeft = portalLeft[i];
+                Float2 newRight = portalRight[i];
+
+                if (SignedArea2(apex, right, newRight) <= 0.0f)
+                {
+                    if (SamePoint(apex, right) || SignedArea2(apex, left, newRight) > 0.0f)
+                    {
+                        right = newRight;
+                        rightIndex = i;
+                    }
+                    else
+                    {
+                        funnelPath.Add(left);
+                        apex = left;
+                        apexIndex = leftIndex;
+                        left = apex;
+                        right = apex;
+                        leftIndex = apexIndex;
+                        rightIndex = apexIndex;
+                        i = apexIndex;
+                        continue;
+                    }
+                }
+
+                if (SignedArea2(apex, left, newLeft) >= 0.0f)
+                {
+                    if (SamePoint(apex, left) || SignedArea2(apex, right, newLeft) < 0.0f)
+                    {
+                        left = newLeft;
+                        leftIndex = i;
+                    }
+                    else
+                    {
+                        funnelPath.Add(right);
+                        apex = right;
+                        apexIndex = rightIndex;
+                        left = apex;
+                        right = apex;
+                        leftIndex = apexIndex;
+                        rightIndex = apexIndex;
+                        i = apexIndex;
+                        continue;
+                    }
+                }
+            }
+
+            funnelPath.Add(corridor[corridor.Count - 1]);
+            if (!IsPathWalkable(funnelPath, navMesh))
+            {
+                funnelPath = PullStringThroughWaypoints(corridor, navMesh);
+            }
+
+            waypoints.Clear();
+            for (int i = funnelPath.Count - 1; i >= 0; i--)
+            {
+                waypoints.Add(funnelPath[i]);
+            }
+        }
+
+        List<Float2> PullStringThroughWaypoints(List<Float2> corridor, NavMesh navMesh)
+        {
+            List<Float2> pulledPath = new List<Float2>();
+            int firstVisibleIndex = 0;
+            pulledPath.Add(corridor[firstVisibleIndex]);
+
+            while (firstVisibleIndex < corridor.Count - 1)
+            {
+                int furthestVisibleIndex = firstVisibleIndex + 1;
+                for (int i = furthestVisibleIndex + 1; i < corridor.Count; i++)
+                {
+                    if (navMesh.CanPointsBeReachedInStraightLine(corridor[firstVisibleIndex], corridor[i]))
+                    {
+                        furthestVisibleIndex = i;
+                    }
+                }
+
+                firstVisibleIndex = furthestVisibleIndex;
+                pulledPath.Add(corridor[firstVisibleIndex]);
+            }
+
+            return pulledPath;
+        }
+
+        bool IsPathWalkable(List<Float2> path, NavMesh navMesh)
+        {
+            for (int i = 0; i < path.Count - 1; i++)
+            {
+                if (!navMesh.CanPointsBeReachedInStraightLine(path[i], path[i + 1]))
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        bool SamePoint(Float2 a, Float2 b)
+        {
+            return a.x == b.x && a.y == b.y;
+        }
+
+        float SignedArea2(Float2 a, Float2 b, Float2 c)
+        {
+            return (b.x - a.x) * (c.y - a.y) - (b.y - a.y) * (c.x - a.x);
 
         }
 

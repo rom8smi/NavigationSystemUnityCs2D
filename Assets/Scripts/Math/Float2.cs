@@ -92,6 +92,11 @@ namespace GenericCode
             return x * x + y * y;
         }
 
+        public float Cross(Float2 p_v)
+        {
+            return x * p_v.y - y * p_v.x;
+        }
+
         public static Float2 Zero()
         {
             return new Float2(0.0f, 0.0f);
