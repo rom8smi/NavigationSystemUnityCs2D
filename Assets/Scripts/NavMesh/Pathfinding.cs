@@ -18,6 +18,7 @@ namespace TriangulationNavigation
         int nodesCount;
         bool useIterations;
         float costIncrement;
+        bool triangleEdgesMode;
 
         public Pathfinding()
         {
@@ -30,9 +31,23 @@ namespace TriangulationNavigation
             additionalCosts = new List<float>();
             additionalCostsModified = new List<bool>();
             addedAdditionalCosts = new List<int>();
+
+            triangleEdgesMode = true;
         }
 
-        public void CreateNodes1(NavMesh navMesh)
+        public void CreateNodes(NavMesh navMesh)
+        {
+            if (triangleEdgesMode)
+            {
+                CreateNodesEdges(navMesh);
+            }
+            else
+            {
+                CreateNodesCorners(navMesh);
+            }
+        }
+
+        public void CreateNodesCorners(NavMesh navMesh)
         {
             useIterations = true;
             costIncrement = 1.0f;
@@ -85,7 +100,7 @@ namespace TriangulationNavigation
             }
         }
 
-        public void CreateNodes(NavMesh navMesh)
+        public void CreateNodesEdges(NavMesh navMesh)
         {
             useIterations = true;
             costIncrement = 1.0f;
@@ -298,8 +313,19 @@ namespace TriangulationNavigation
             int startNode = nodesCount;
             int targetNode = nodesCount + 1;
 
-            int startTriangle = UpdatePositionNode(startPos, navMesh, startNode);
-            int targetTriangle = UpdatePositionNode(targetPos, navMesh, targetNode);
+            int startTriangle;
+            int targetTriangle;
+
+            if (triangleEdgesMode)
+            {
+                startTriangle = UpdatePositionNodeEdges(startPos, navMesh, startNode);
+                targetTriangle = UpdatePositionNodeEdges(targetPos, navMesh, targetNode);
+            }
+            else
+            {
+                startTriangle = UpdatePositionNodeCorners(startPos, navMesh, startNode);
+                targetTriangle = UpdatePositionNodeCorners(targetPos, navMesh, targetNode);
+            }
 
             bool pathSuccess = false;
             float lowestHCost = float.MaxValue;
@@ -389,7 +415,14 @@ namespace TriangulationNavigation
             if (pathSuccess)
             {
                 RetracePath(waypoints, startNode, targetNode);
-                // SimplifyPath(waypoints, navMesh);
+                if (triangleEdgesMode)
+                {
+                    SimplifyPathEdges(waypoints, navMesh);
+                }
+                else
+                {
+                    SimplifyPathCorners(waypoints, navMesh);
+                }
 
                 waypoints.RemoveAt(waypoints.Count - 1);
                 waypoints = ReversePath(waypoints);
@@ -463,7 +496,12 @@ namespace TriangulationNavigation
             waypoints.Add(waypointPosition);
         }
 
-        void SimplifyPath(List<Float2> waypoints, NavMesh navMesh)
+        void SimplifyPathEdges(List<Float2> waypoints, NavMesh navMesh)
+        {
+
+        }
+
+        void SimplifyPathCorners(List<Float2> waypoints, NavMesh navMesh)
         {
             List<bool> mergeConsidered = new List<bool>();
             List<float> straightLineDistancesSqr = new List<float>();
@@ -560,7 +598,7 @@ namespace TriangulationNavigation
             return reversedWaypoints;
         }
 
-        int UpdatePositionNode(Float2 position, NavMesh navMesh, int nodeIndex)
+        int UpdatePositionNodeEdges(Float2 position, NavMesh navMesh, int nodeIndex)
         {
             int triangle = navMesh.FindWalkableTriangleForPoint(position);
 
@@ -604,7 +642,7 @@ namespace TriangulationNavigation
             return triangle;
         }
 
-        int UpdatePositionNode2(Float2 position, NavMesh navMesh, int nodeIndex)
+        int UpdatePositionNodeCorners(Float2 position, NavMesh navMesh, int nodeIndex)
         {
             int triangle = navMesh.FindWalkableTriangleForPoint(position);
 
