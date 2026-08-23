@@ -96,5 +96,10 @@ namespace GenericCode
         {
             return new Float2(0.0f, 0.0f);
         }
+
+        public override string ToString()
+        {
+            return $"Float2({x}, {y})";
+        }
     }
 }

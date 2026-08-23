@@ -9,8 +9,8 @@ namespace TriangulationNavigation
         Heap openSet;
         List<int> closedSet;
         List<PathfindingNode> nodes;
-        List<Float2> nodePositions;
-        List<List<int>> nodeNeighbours;
+        public List<Float2> nodePositions;
+        public List<List<int>> nodeNeighbours;
         List<float> additionalCosts;
         List<bool> additionalCostsModified;
         List<int> addedAdditionalCosts;
@@ -30,7 +30,7 @@ namespace TriangulationNavigation
             addedAdditionalCosts = new List<int>();
         }
 
-        public void CreateNodes(NavMesh navMesh)
+        public void CreateNodes1(NavMesh navMesh)
         {
             useIterations = true;
             costIncrement = 1.0f;
@@ -81,6 +81,132 @@ namespace TriangulationNavigation
                 additionalCosts.Add(0.0f);
                 additionalCostsModified.Add(false);
             }
+        }
+
+        public void CreateNodes(NavMesh navMesh)
+        {
+            useIterations = true;
+            costIncrement = 1.0f;
+            openSet.Clear(nodes);
+            nodes.Clear();
+            nodePositions.Clear();
+            nodeNeighbours.Clear();
+            additionalCosts.Clear();
+            additionalCostsModified.Clear();
+
+            List<int> nodeEdgeRefs = new List<int>();
+            nodeEdgeRefs.Resize(navMesh.delaunator.trianglesLen);
+
+            for (int i = 0; i < navMesh.delaunator.trianglesLen; i++)
+            {
+                nodeEdgeRefs[i] = -1;
+            }
+
+            for (int t = 0; t < navMesh.delaunator.trianglesLen / 3; t++)
+            {
+                List<int> walkableIndices = new List<int>();
+                List<bool> repetitive = new List<bool>();
+                List<int> tempIndices = new List<int>();
+
+                for (int i = 0; i < 3; i++)
+                {
+                    int e = t * 3 + i;
+                    int opposite = navMesh.delaunator.halfedges[e];
+
+                    if (opposite != -1)
+                    {
+                        if (navMesh.trianglesWalkability[Delaunator.TriangleOfEdge(e)] == -1 &&
+                        navMesh.trianglesWalkability[Delaunator.TriangleOfEdge(opposite)] == -1)
+                        {
+                            walkableIndices.Add(i);
+                            if (e > opposite)
+                            {
+                                repetitive.Add(false);
+                            }
+                            else
+                            {
+                                repetitive.Add(true);
+                            }
+
+
+                        }
+                    }
+                }
+
+                for (int i = 0; i < walkableIndices.Count; i++)
+                {
+                    if (!repetitive[i])
+                    {
+                        int e = t * 3 + walkableIndices[i];
+                        int opposite = navMesh.delaunator.halfedges[e];
+
+                        int p = navMesh.delaunator.triangles[e];
+                        int q = navMesh.delaunator.triangles[Delaunator.NextHalfedge(e)];
+
+                        Float2 center = (navMesh.allPoints[p] + navMesh.allPoints[q]) * 0.5f;
+
+                        int currentNodesCount = nodes.Count;
+                        tempIndices.Add(currentNodesCount);
+
+                        nodes.Add(new PathfindingNode
+                        {
+                            gCost = 0,
+                            hCost = 0,
+                            parent = -1,
+                            heapIndex = -1,
+                            isInClosedSet = false
+                        });
+                        nodePositions.Add(center);
+                        nodeNeighbours.Add(new List<int>());
+                        additionalCosts.Add(0.0f);
+                        additionalCostsModified.Add(false);
+                        nodeEdgeRefs[e] = currentNodesCount;
+                        nodeEdgeRefs[opposite] = currentNodesCount;
+                    }
+                    else
+                    {
+                        int e = t * 3 + walkableIndices[i];
+                        int opposite = navMesh.delaunator.halfedges[e];
+
+                        tempIndices.Add(nodeEdgeRefs[opposite]);
+                    }
+                }
+
+                for (int i = 0; i < walkableIndices.Count; i++)
+                {
+                    if (!repetitive[i])
+                    {
+                        for (int j = i + 1; j < walkableIndices.Count; j++)
+                        {
+                            if (!repetitive[j])
+                            {
+                                nodeNeighbours[tempIndices[i]].Add(tempIndices[j]);
+                            }
+                        }
+                    }
+                }
+            }
+
+
+            for (int i = 0; i < nodeNeighbours.Count; i++)
+            {
+                for (int j = 0; j < nodeNeighbours[i].Count; j++)
+                {
+                    int neighbour = nodeNeighbours[i][j];
+                    nodeNeighbours[neighbour].Add(i);
+                }
+            }
+
+            nodesCount = nodes.Count;
+
+            // for (int i = 0; i < 2; i++)
+            // {
+            //     nodes.Add(new PathfindingNode());
+            //     nodePositions.Add(Float2.Zero());
+            //     nodeNeighbours.Add(new List<int>());
+            //     additionalCosts.Add(0.0f);
+            //     additionalCostsModified.Add(false);
+            // }
         }
 
         public Path FindPath(Float2 startPos, Float2 targetPos, NavMesh navMesh)
@@ -276,7 +402,7 @@ namespace TriangulationNavigation
             if (pathSuccess)
             {
                 RetracePath(waypoints, startNode, targetNode);
-                SimplifyPath(waypoints, navMesh);
+                // SimplifyPath(waypoints, navMesh);
 
                 waypoints.RemoveAt(waypoints.Count - 1);
                 waypoints = ReversePath(waypoints);
