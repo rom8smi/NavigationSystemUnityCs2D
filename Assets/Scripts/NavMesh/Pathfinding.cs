@@ -119,7 +119,7 @@ namespace TriangulationNavigation
                         navMesh.trianglesWalkability[Delaunator.TriangleOfEdge(opposite)] == -1)
                         {
                             walkableIndices.Add(i);
-                            if (e > opposite)
+                            if (e < opposite)
                             {
                                 repetitive.Add(false);
                             }
@@ -127,8 +127,6 @@ namespace TriangulationNavigation
                             {
                                 repetitive.Add(true);
                             }
-
-
                         }
                     }
                 }
@@ -174,26 +172,13 @@ namespace TriangulationNavigation
 
                 for (int i = 0; i < walkableIndices.Count; i++)
                 {
-                    if (!repetitive[i])
+                    for (int j = i + 1; j < walkableIndices.Count; j++)
                     {
-                        for (int j = i + 1; j < walkableIndices.Count; j++)
-                        {
-                            if (!repetitive[j])
-                            {
-                                nodeNeighbours[tempIndices[i]].Add(tempIndices[j]);
-                            }
-                        }
+                        int firstNode = tempIndices[i];
+                        int secondNode = tempIndices[j];
+                        nodeNeighbours[firstNode].Add(secondNode);
+                        nodeNeighbours[secondNode].Add(firstNode);
                     }
-                }
-            }
-
-
-            for (int i = 0; i < nodeNeighbours.Count; i++)
-            {
-                for (int j = 0; j < nodeNeighbours[i].Count; j++)
-                {
-                    int neighbour = nodeNeighbours[i][j];
-                    nodeNeighbours[neighbour].Add(i);
                 }
             }
 

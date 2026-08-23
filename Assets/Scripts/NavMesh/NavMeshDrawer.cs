@@ -118,7 +118,7 @@ namespace TriangulationNavigation
 
                 for(int i=0; i<pathfinding.nodeNeighbours.Count; i++)
                 {
-                    for(int j=0; j<pathfinding.nodeNeighbours[i].Count; i++)
+                    for(int j=0; j<pathfinding.nodeNeighbours[i].Count; j++)
                     {
                         int neighbourIndex = pathfinding.nodeNeighbours[i][j];
 
