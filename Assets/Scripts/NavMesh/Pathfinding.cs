@@ -653,16 +653,7 @@ namespace TriangulationNavigation
 
         float Orient2D(Float2 a, Float2 b, Float2 c)
         {
-            return Orient2D(a.x, a.y, b.x, b.y, c.x, c.y);
-        }
-
-        public float Orient2D(float ax, float ay, float bx, float by, float cx, float cy)
-        {
-            float acx = ax - cx;
-            float bcx = bx - cx;
-            float acy = ay - cy;
-            float bcy = by - cy;
-            return acx * bcy - acy * bcx;
+            return (b - a).Cross(c - a);
         }
 
         void SimplifyPathCorners(List<Float2> waypoints, NavMesh navMesh)
