@@ -569,10 +569,10 @@ namespace TriangulationNavigation
                 int q = navMesh.delaunator.triangles[Delaunator.NextHalfedge(edgeIndex)];
 
                 Float2 perpendicularDirection = navMesh.allPoints[p] - nodePositions[waypointIndex];
-                bool swap = pathDirection.Cross(perpendicularDirection) < 0.0f;
+                bool invertOrder = pathDirection.Cross(perpendicularDirection) < 0.0f;
 
-                leftPortalsEdgeIndices[i + 1] = swap ? p : q;
-                rightPortalsEdgeIndices[i + 1] = swap ? q : p;
+                leftPortalsEdgeIndices[i + 1] = invertOrder ? p : q;
+                rightPortalsEdgeIndices[i + 1] = invertOrder ? q : p;
             }
 
             List<int> simplifiedIndices = new List<int>();
@@ -612,59 +612,59 @@ namespace TriangulationNavigation
             List<int> simplifiedIndices)
         {
             int totalPoints = waypoints.Count;
-            Float2 apexPos = waypoints[0];
+            Float2 apexPosition = waypoints[0];
 
-            simplifiedWaypoints.Add(apexPos);
+            simplifiedWaypoints.Add(apexPosition);
             simplifiedIndices.Add(-1);
 
             int apexIndex = 0;
             int leftIndex = 0;
             int rightIndex = 0;
 
-            int apexVertId = -1;
-            int lastAddedVertId = -1;
+            int apexCornerIndex = -1;
+            int lastAddedCornerIndex = -1;
 
             for (int i = 1; i < totalPoints; i++)
             {
-                int currentLeftVertId = leftPortalsEdgeIndices[i];
-                int currentRightVertId = rightPortalsEdgeIndices[i];
+                int currentLeftCornerIndex = leftPortalsEdgeIndices[i];
+                int currentRightCornerIndex = rightPortalsEdgeIndices[i];
 
-                int activeLeftVertId = leftPortalsEdgeIndices[leftIndex];
-                int activeRightVertId = rightPortalsEdgeIndices[rightIndex];
+                int activeLeftCornerIndex = leftPortalsEdgeIndices[leftIndex];
+                int activeRightCornerIndex = rightPortalsEdgeIndices[rightIndex];
 
                 // 1. Update Right side of funnel
-                Float2 currentRightPos = GetPortalPosition(i, currentRightVertId, waypoints, navMesh);
-                Float2 activeRightPos = GetPortalPosition(rightIndex, activeRightVertId, waypoints, navMesh);
+                Float2 currentRightPosition = GetPortalPosition(i, currentRightCornerIndex, waypoints, navMesh);
+                Float2 activeRightPosition = GetPortalPosition(rightIndex, activeRightCornerIndex, waypoints, navMesh);
 
                 bool isRightTightening = (rightIndex == apexIndex) ||
-                                         (Orient2D(apexPos, activeRightPos, currentRightPos) <= 0.0f);
+                                         (Orient2D(apexPosition, activeRightPosition, currentRightPosition) <= 0.0f);
 
                 if (isRightTightening)
                 {
-                    bool sameAsLeft = (currentRightVertId != -1 && currentRightVertId == activeLeftVertId);
-                    bool sameAsApex = (currentRightVertId != -1 && apexVertId != -1 && currentRightVertId == apexVertId);
+                    bool sameAsLeft = (currentRightCornerIndex != -1 && currentRightCornerIndex == activeLeftCornerIndex);
+                    bool sameAsApex = (currentRightCornerIndex != -1 && apexCornerIndex != -1 && currentRightCornerIndex == apexCornerIndex);
 
-                    Float2 activeLeftPos = GetPortalPosition(leftIndex, activeLeftVertId, waypoints, navMesh);
+                    Float2 activeLeftPosition = GetPortalPosition(leftIndex, activeLeftCornerIndex, waypoints, navMesh);
 
                     if (rightIndex == apexIndex || sameAsLeft || sameAsApex ||
-                        Orient2D(apexPos, activeLeftPos, currentRightPos) >= 0.0f)
+                        Orient2D(apexPosition, activeLeftPosition, currentRightPosition) >= 0.0f)
                     {
                         rightIndex = i;
                     }
                     else
                     {
-                        int leftVertId = activeLeftVertId;
+                        int leftCornerIndex = activeLeftCornerIndex;
 
-                        if (leftVertId < 0 || leftVertId != lastAddedVertId)
+                        if (leftCornerIndex < 0 || leftCornerIndex != lastAddedCornerIndex)
                         {
-                            simplifiedWaypoints.Add(activeLeftPos);
-                            simplifiedIndices.Add(leftVertId);
-                            lastAddedVertId = leftVertId;
+                            simplifiedWaypoints.Add(activeLeftPosition);
+                            simplifiedIndices.Add(leftCornerIndex);
+                            lastAddedCornerIndex = leftCornerIndex;
                         }
 
-                        apexPos = activeLeftPos;
+                        apexPosition = activeLeftPosition;
                         apexIndex = leftIndex;
-                        apexVertId = leftVertId;
+                        apexCornerIndex = leftCornerIndex;
 
                         leftIndex = apexIndex;
                         rightIndex = apexIndex;
@@ -675,38 +675,38 @@ namespace TriangulationNavigation
                 }
 
                 // 2. Update Left side of funnel
-                Float2 currentLeftPos = GetPortalPosition(i, currentLeftVertId, waypoints, navMesh);
-                Float2 activeLeftPosCurrent = GetPortalPosition(leftIndex, activeLeftVertId, waypoints, navMesh);
+                Float2 currentLeftPosition = GetPortalPosition(i, currentLeftCornerIndex, waypoints, navMesh);
+                Float2 activeLeftPositionCurrent = GetPortalPosition(leftIndex, activeLeftCornerIndex, waypoints, navMesh);
 
                 bool isLeftTightening = (leftIndex == apexIndex) ||
-                                        (Orient2D(apexPos, activeLeftPosCurrent, currentLeftPos) >= 0.0f);
+                                        (Orient2D(apexPosition, activeLeftPositionCurrent, currentLeftPosition) >= 0.0f);
 
                 if (isLeftTightening)
                 {
-                    bool sameAsRight = (currentLeftVertId != -1 && currentLeftVertId == activeRightVertId);
-                    bool sameAsApex = (currentLeftVertId != -1 && apexVertId != -1 && currentLeftVertId == apexVertId);
+                    bool sameAsRight = (currentLeftCornerIndex != -1 && currentLeftCornerIndex == activeRightCornerIndex);
+                    bool sameAsApex = (currentLeftCornerIndex != -1 && apexCornerIndex != -1 && currentLeftCornerIndex == apexCornerIndex);
 
-                    Float2 activeRightPosCurrent = GetPortalPosition(rightIndex, activeRightVertId, waypoints, navMesh);
+                    Float2 activeRightPositionCurrent = GetPortalPosition(rightIndex, activeRightCornerIndex, waypoints, navMesh);
 
                     if (leftIndex == apexIndex || sameAsRight || sameAsApex ||
-                        Orient2D(apexPos, activeRightPosCurrent, currentLeftPos) <= 0.0f)
+                        Orient2D(apexPosition, activeRightPositionCurrent, currentLeftPosition) <= 0.0f)
                     {
                         leftIndex = i;
                     }
                     else
                     {
-                        int rightVertId = activeRightVertId;
+                        int rightCornerIndex = activeRightCornerIndex;
 
-                        if (rightVertId < 0 || rightVertId != lastAddedVertId)
+                        if (rightCornerIndex < 0 || rightCornerIndex != lastAddedCornerIndex)
                         {
-                            simplifiedWaypoints.Add(activeRightPosCurrent);
-                            simplifiedIndices.Add(rightVertId);
-                            lastAddedVertId = rightVertId;
+                            simplifiedWaypoints.Add(activeRightPositionCurrent);
+                            simplifiedIndices.Add(rightCornerIndex);
+                            lastAddedCornerIndex = rightCornerIndex;
                         }
 
-                        apexPos = activeRightPosCurrent;
+                        apexPosition = activeRightPositionCurrent;
                         apexIndex = rightIndex;
-                        apexVertId = rightVertId;
+                        apexCornerIndex = rightCornerIndex;
 
                         leftIndex = apexIndex;
                         rightIndex = apexIndex;
