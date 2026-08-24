@@ -580,31 +580,33 @@ namespace TriangulationNavigation
                 int p = navMesh.delaunator.triangles[edgeIndex];
                 int q = navMesh.delaunator.triangles[Delaunator.NextHalfedge(edgeIndex)];
 
-                Float2 perpendicularDirection = navMesh.allPoints[p] - nodePositions[waypointIndex];
-
                 int pFinal = p;
                 int qFinal = q;
 
+                Float2 perpendicularDirection = navMesh.allPoints[p] - nodePositions[waypointIndex];
+
                 if (pathDirection.Cross(perpendicularDirection) < 0.0f)
                 {
-                    perpendicularDirection = -perpendicularDirection;
-
                     pFinal = q;
                     qFinal = p;
                 }
 
-                Float2 leftPortalEdge = nodePositions[waypointIndex] - perpendicularDirection;
-                Float2 rightPortalEdge = nodePositions[waypointIndex] + perpendicularDirection;
-
-                leftPortalsEdges[i + 1] = leftPortalEdge;
-                rightPortalsEdges[i + 1] = rightPortalEdge;
+                leftPortalsEdges[i + 1] = navMesh.allPoints[qFinal];
+                rightPortalsEdges[i + 1] = navMesh.allPoints[pFinal];
 
                 leftPortalsEdgeIndices[i + 1] = qFinal;
                 rightPortalsEdgeIndices[i + 1] = pFinal;
             }
 
             List<int> simplifiedIndices = new List<int>();
-            SimplifyPathEdgesInner(waypoints, leftPortalsEdges, rightPortalsEdges, leftPortalsEdgeIndices, rightPortalsEdgeIndices, simplifiedWaypoints, simplifiedIndices);
+            SimplifyPathEdgesInner(
+                waypoints,
+                leftPortalsEdges,
+                rightPortalsEdges,
+                leftPortalsEdgeIndices,
+                rightPortalsEdgeIndices,
+                simplifiedWaypoints,
+                simplifiedIndices);
 
             waypoints.Clear();
             for (int i = 0; i < simplifiedWaypoints.Count; i++)
