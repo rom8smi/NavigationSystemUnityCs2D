@@ -121,10 +121,14 @@ namespace TriangulationNavigation
                 nodeEdgeRefs[i] = -1;
             }
 
+            List<int> walkableIndices = new List<int>();
+            List<bool> repetitive = new List<bool>();
+            List<int> nodeIndicesInTriangle = new List<int>();
+
             for (int t = 0; t < navMesh.delaunator.trianglesLen / 3; t++)
             {
-                List<int> walkableIndices = new List<int>();
-                List<bool> repetitive = new List<bool>();
+                walkableIndices.Clear();
+                repetitive.Clear();
 
                 for (int i = 0; i < 3; i++)
                 {
@@ -149,16 +153,17 @@ namespace TriangulationNavigation
                     }
                 }
 
-                List<int> nodeIndicesInTriangle = new List<int>();
+                int walkableIndicesCount = walkableIndices.Count;
+                nodeIndicesInTriangle.Resize(walkableIndicesCount);
 
-                for (int i = 0; i < walkableIndices.Count; i++)
+                for (int i = 0; i < walkableIndicesCount; i++)
                 {
                     if (repetitive[i])
                     {
                         int e = t * 3 + walkableIndices[i];
                         int opposite = navMesh.delaunator.halfedges[e];
 
-                        nodeIndicesInTriangle.Add(nodeEdgeRefs[opposite]);
+                        nodeIndicesInTriangle[i] = nodeEdgeRefs[opposite];
                     }
                     else
                     {
@@ -171,7 +176,7 @@ namespace TriangulationNavigation
                         Float2 center = (navMesh.allPoints[p] + navMesh.allPoints[q]) * 0.5f;
 
                         int currentNodesCount = nodes.Count;
-                        nodeIndicesInTriangle.Add(currentNodesCount);
+                        nodeIndicesInTriangle[i] = currentNodesCount;
 
                         nodes.Add(new PathfindingNode
                         {
@@ -191,9 +196,9 @@ namespace TriangulationNavigation
                     }
                 }
 
-                for (int i = 0; i < walkableIndices.Count; i++)
+                for (int i = 0; i < walkableIndicesCount; i++)
                 {
-                    for (int j = i + 1; j < walkableIndices.Count; j++)
+                    for (int j = i + 1; j < walkableIndicesCount; j++)
                     {
                         int nodeA = nodeIndicesInTriangle[i];
                         int nodeB = nodeIndicesInTriangle[j];
@@ -589,18 +594,6 @@ namespace TriangulationNavigation
             {
                 waypoints.Add(simplifiedWaypoints[i]);
             }
-
-            // DebugWaypoints(simplifiedWaypoints);
-        }
-
-        void DebugWaypoints(List<Float2> waypoints)
-        {
-            string s = $"Simplified path {waypoints.Count}\n";
-            for (int i = 0; i < waypoints.Count; i++)
-            {
-                s += $"{i} {waypoints[i]}\n";
-            }
-            UnityEngine.Debug.Log(s);
         }
 
         void SimplifyPathEdgesInner(
@@ -632,7 +625,6 @@ namespace TriangulationNavigation
                 int activeLeftCornerIndex = leftPortalsEdgeIndices[leftIndex];
                 int activeRightCornerIndex = rightPortalsEdgeIndices[rightIndex];
 
-                // 1. Update Right side of funnel
                 Float2 currentRightPosition = GetPortalPosition(i, currentRightCornerIndex, waypoints, navMesh);
                 Float2 activeRightPosition = GetPortalPosition(rightIndex, activeRightCornerIndex, waypoints, navMesh);
 
@@ -674,7 +666,6 @@ namespace TriangulationNavigation
                     }
                 }
 
-                // 2. Update Left side of funnel
                 Float2 currentLeftPosition = GetPortalPosition(i, currentLeftCornerIndex, waypoints, navMesh);
                 Float2 activeLeftPositionCurrent = GetPortalPosition(leftIndex, activeLeftCornerIndex, waypoints, navMesh);
 
@@ -722,40 +713,11 @@ namespace TriangulationNavigation
                 simplifiedWaypoints.Add(waypoints[totalPoints - 1]);
                 simplifiedIndices.Add(-1);
             }
-
-            // PrintDebugInfo(leftPortalsEdges, rightPortalsEdges, leftPortalsEdgeIndices, rightPortalsEdgeIndices, simplifiedWaypoints, simplifiedIndices);
         }
 
         Float2 GetPortalPosition(int index, int vertId, List<Float2> waypoints, NavMesh navMesh)
         {
             return vertId >= 0 ? navMesh.allPoints[vertId] : waypoints[index];
-        }
-
-        private void PrintDebugInfo(
-            List<Float2> leftEdges,
-            List<Float2> rightEdges,
-            List<int> leftIndices,
-            List<int> rightIndices,
-            List<Float2> simplifiedWaypoints,
-            List<int> simplifiedIndices)
-        {
-            System.Text.StringBuilder sb = new System.Text.StringBuilder();
-
-            sb.AppendLine("=== PORTAL INPUT DATA ===");
-            for (int i = 0; i < leftEdges.Count; i++)
-            {
-                int lId = (i < leftIndices.Count) ? leftIndices[i] : -1;
-                int rId = (i < rightIndices.Count) ? rightIndices[i] : -1;
-                sb.AppendLine($"Portal [{i}] | Left: {leftEdges[i]} (ID: {lId}) | Right: {rightEdges[i]} (ID: {rId})");
-            }
-
-            sb.AppendLine("\n=== SIMPLIFIED PATH RESULT ===");
-            for (int i = 0; i < simplifiedWaypoints.Count; i++)
-            {
-                sb.AppendLine($"Waypoint [{i}] | Pos: {simplifiedWaypoints[i]} | VertID: {simplifiedIndices[i]}");
-            }
-
-            UnityEngine.Debug.Log(sb.ToString());
         }
 
         float Orient2D(Float2 a, Float2 b, Float2 c)
