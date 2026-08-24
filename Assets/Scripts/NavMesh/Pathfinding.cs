@@ -447,7 +447,6 @@ namespace TriangulationNavigation
             }
 
             List<Float2> waypoints = new List<Float2>();
-            List<Float2> simplifiedWaypoints = new List<Float2>();
 
             if (pathSuccess)
             {
@@ -456,9 +455,7 @@ namespace TriangulationNavigation
 
                 if (triangleEdgesMode)
                 {
-                    SimplifyPathEdges(waypoints, simplifiedWaypoints, waypointIndices, navMesh);
-                    simplifiedWaypoints.RemoveAt(simplifiedWaypoints.Count - 1);
-                    simplifiedWaypoints = ReversePath(simplifiedWaypoints);
+                    SimplifyPathEdges(waypoints, waypointIndices, navMesh);
                 }
                 else
                 {
@@ -472,7 +469,6 @@ namespace TriangulationNavigation
             return new Path
             {
                 waypoints = waypoints,
-                simplifiedWaypoints = simplifiedWaypoints,
                 success = pathSuccess,
                 lowestHCostNode = lowestHCostNode
             };
@@ -540,7 +536,7 @@ namespace TriangulationNavigation
             waypointIndices.Add(startNode);
         }
 
-        void SimplifyPathEdges(List<Float2> waypoints, List<Float2> simplifiedWaypoints, List<int> waypointIndices, NavMesh navMesh)
+        void SimplifyPathEdges(List<Float2> waypoints, List<int> waypointIndices, NavMesh navMesh)
         {
             int waypointIndicesCount = waypointIndices.Count;
             if (waypointIndicesCount < 3)
@@ -562,32 +558,35 @@ namespace TriangulationNavigation
 
             for (int i = 0; i < waypointIndices.Count - 2; i++)
             {
-                int waypointIndex = waypointIndices[i + 1];
-                int edgeIndex = nodeEdgeRefsInverted[waypointIndex];
+                int previousWaypointIndex = waypointIndices[i];
+                int currentWaypointIndex = waypointIndices[i + 1];
+                int nextWaypointIndex = waypointIndices[i + 2];
 
-                Float2 pathDirectionA = (nodePositions[waypointIndex] - nodePositions[waypointIndices[i]]).Normalized();
-                Float2 pathDirectionB = (nodePositions[waypointIndices[i + 2]] - nodePositions[waypointIndex]).Normalized();
+                int edgeIndex = nodeEdgeRefsInverted[currentWaypointIndex];
+
+                Float2 pathDirectionA = (nodePositions[currentWaypointIndex] - nodePositions[previousWaypointIndex]).Normalized();
+                Float2 pathDirectionB = (nodePositions[nextWaypointIndex] - nodePositions[currentWaypointIndex]).Normalized();
 
                 Float2 pathDirection = (pathDirectionA + pathDirectionB) * 0.5f;
 
                 int p = navMesh.delaunator.triangles[edgeIndex];
                 int q = navMesh.delaunator.triangles[Delaunator.NextHalfedge(edgeIndex)];
 
-                Float2 perpendicularDirection = navMesh.allPoints[p] - nodePositions[waypointIndex];
+                Float2 perpendicularDirection = navMesh.allPoints[p] - nodePositions[currentWaypointIndex];
                 bool invertOrder = pathDirection.Cross(perpendicularDirection) < 0.0f;
 
                 leftPortalsEdgeIndices[i + 1] = invertOrder ? p : q;
                 rightPortalsEdgeIndices[i + 1] = invertOrder ? q : p;
             }
 
-            List<int> simplifiedIndices = new List<int>();
+            List<Float2> simplifiedWaypoints = new List<Float2>();
+
             SimplifyPathEdgesInner(
                 waypoints,
                 leftPortalsEdgeIndices,
                 rightPortalsEdgeIndices,
                 navMesh,
-                simplifiedWaypoints,
-                simplifiedIndices);
+                simplifiedWaypoints);
 
             waypoints.Clear();
             for (int i = 0; i < simplifiedWaypoints.Count; i++)
@@ -601,14 +600,12 @@ namespace TriangulationNavigation
             List<int> leftPortalsEdgeIndices,
             List<int> rightPortalsEdgeIndices,
             NavMesh navMesh,
-            List<Float2> simplifiedWaypoints,
-            List<int> simplifiedIndices)
+            List<Float2> simplifiedWaypoints)
         {
             int totalPoints = waypoints.Count;
             Float2 apexPosition = waypoints[0];
 
             simplifiedWaypoints.Add(apexPosition);
-            simplifiedIndices.Add(-1);
 
             int apexIndex = 0;
             int leftIndex = 0;
@@ -650,7 +647,6 @@ namespace TriangulationNavigation
                         if (leftCornerIndex < 0 || leftCornerIndex != lastAddedCornerIndex)
                         {
                             simplifiedWaypoints.Add(activeLeftPosition);
-                            simplifiedIndices.Add(leftCornerIndex);
                             lastAddedCornerIndex = leftCornerIndex;
                         }
 
@@ -691,7 +687,6 @@ namespace TriangulationNavigation
                         if (rightCornerIndex < 0 || rightCornerIndex != lastAddedCornerIndex)
                         {
                             simplifiedWaypoints.Add(activeRightPositionCurrent);
-                            simplifiedIndices.Add(rightCornerIndex);
                             lastAddedCornerIndex = rightCornerIndex;
                         }
 
@@ -711,7 +706,6 @@ namespace TriangulationNavigation
             if (apexIndex < totalPoints - 1)
             {
                 simplifiedWaypoints.Add(waypoints[totalPoints - 1]);
-                simplifiedIndices.Add(-1);
             }
         }
 
