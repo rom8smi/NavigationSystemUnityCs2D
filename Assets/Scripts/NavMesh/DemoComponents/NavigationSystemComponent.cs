@@ -129,6 +129,7 @@ namespace TriangulationNavigation
             if (path.success)
             {
                 agent.waypoints = path.waypoints;
+                agent.simplifiedWaypoints = path.simplifiedWaypoints;
                 agent.followingPath = true;
                 agent.destination = targetPosition;
                 agent.currentWaypointIndex = 0;

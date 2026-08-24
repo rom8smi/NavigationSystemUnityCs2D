@@ -9,6 +9,7 @@ namespace TriangulationNavigation
         public float speed;
         public Float2 destination;
         public List<Float2> waypoints;
+        public List<Float2> simplifiedWaypoints;
         public int currentWaypointIndex;
         public bool followingPath;
         public bool searchPathLater;

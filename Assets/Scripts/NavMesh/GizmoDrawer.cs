@@ -75,15 +75,40 @@ namespace TriangulationNavigation
         {
             if (agent.followingPath)
             {
-                DrawPath(agent.currentWaypointIndex, position, agent.waypoints, Color.black);
+                DrawPath(agent.currentWaypointIndex, position, agent.waypoints, agent.waypoints.Count, Color.black);
+                DrawPath(agent.currentWaypointIndex, position, agent.simplifiedWaypoints, agent.simplifiedWaypoints.Count, Color.green);
+
+                // int startIndex = agent.currentWaypointIndex;
+                // int count = agent.simplifiedWaypoints.Count;
+                // Color color = Color.green;
+
+                // for (int i = startIndex; i < count; i++)
+                // {
+                //     if (i != 0)
+                //     {
+                //         Gizmos.color = color;
+                //         Vector3 currentWaypoint = new Vector3(agent.simplifiedWaypoints[i].x, 0.0f, agent.simplifiedWaypoints[i].y);
+                //         Gizmos.DrawCube(currentWaypoint, Vector3.one * 0.8f);
+
+                //         if (i == startIndex)
+                //         {
+                //             Gizmos.DrawLine(position, currentWaypoint);
+                //         }
+                //         else
+                //         {
+                //             Vector3 previousWaypoint = new Vector3(agent.simplifiedWaypoints[i - 1].x, 0.0f, agent.simplifiedWaypoints[i - 1].y);
+                //             Gizmos.DrawLine(previousWaypoint, currentWaypoint);
+                //         }
+                //     }
+                // }
             }
         }
 
-        void DrawPath(int startIndex, Vector3 position, List<Float2> waypoints, Color color)
+        void DrawPath(int startIndex, Vector3 position, List<Float2> waypoints, int count, Color color)
         {
-            for (int i = startIndex; i < waypoints.Count; i++)
+            for (int i = startIndex; i < count; i++)
             {
-                Gizmos.color = Color.black;
+                Gizmos.color = color;
                 Vector3 currentWaypoint = new Vector3(waypoints[i].x, 0.0f, waypoints[i].y);
                 Gizmos.DrawCube(currentWaypoint, Vector3.one * 0.8f);
 

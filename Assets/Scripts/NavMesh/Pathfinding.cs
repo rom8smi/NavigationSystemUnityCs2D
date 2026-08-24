@@ -416,6 +416,7 @@ namespace TriangulationNavigation
             }
 
             List<Float2> waypoints = new List<Float2>();
+            List<Float2> simplifiedWaypoints = new List<Float2>();
 
             if (pathSuccess)
             {
@@ -424,7 +425,9 @@ namespace TriangulationNavigation
 
                 if (triangleEdgesMode)
                 {
-                    SimplifyPathEdges(waypoints, waypointIndices, navMesh);
+                    SimplifyPathEdges(waypoints, simplifiedWaypoints, waypointIndices, navMesh);
+                    simplifiedWaypoints.RemoveAt(simplifiedWaypoints.Count - 1);
+                    simplifiedWaypoints = ReversePath(simplifiedWaypoints);
                 }
                 else
                 {
@@ -438,6 +441,7 @@ namespace TriangulationNavigation
             return new Path
             {
                 waypoints = waypoints,
+                simplifiedWaypoints = simplifiedWaypoints,
                 success = pathSuccess,
                 lowestHCostNode = lowestHCostNode
             };
@@ -505,7 +509,7 @@ namespace TriangulationNavigation
             waypointIndices.Add(startNode);
         }
 
-        void SimplifyPathEdges(List<Float2> waypoints, List<int> waypointIndices, NavMesh navMesh)
+        void SimplifyPathEdges(List<Float2> waypoints, List<Float2> simplifiedWaypoints, List<int> waypointIndices, NavMesh navMesh)
         {
             int waypointIndicesCount = waypointIndices.Count;
             if (waypointIndicesCount < 3)
@@ -573,16 +577,15 @@ namespace TriangulationNavigation
                 rightPortalsEdgeIndices[i + 1] = qFinal;
             }
 
-            List<Float2> simplifiedWaypoints = new List<Float2>();
             SimplifyPathEdgesInner(waypoints, leftPortalsEdges, rightPortalsEdges, leftPortalsEdgeIndices, rightPortalsEdgeIndices, simplifiedWaypoints);
 
-            waypoints.Clear();
-            for (int i = 0; i < simplifiedWaypoints.Count; i++)
-            {
-                waypoints.Add(simplifiedWaypoints[i]);
-            }
+            // waypoints.Clear();
+            // for (int i = 0; i < simplifiedWaypoints.Count; i++)
+            // {
+            //     waypoints.Add(simplifiedWaypoints[i]);
+            // }
 
-            DebugWaypoints(waypoints);
+            DebugWaypoints(simplifiedWaypoints);
         }
 
         void DebugWaypoints(List<Float2> waypoints)
@@ -608,7 +611,6 @@ namespace TriangulationNavigation
 
             simplifiedWaypoints.Add(startPos);
 
-            // Initialize funnel state
             Float2 portalApex = startPos;
             Float2 portalLeft = startPos;
             Float2 portalRight = startPos;
@@ -616,9 +618,7 @@ namespace TriangulationNavigation
             int apexIndex = 0;
             int leftIndex = 0;
             int rightIndex = 0;
-
-            // Tracks the portal index corresponding to the last waypoint pushed
-            int lastAddedIndex = 0;
+            int lastAddedVertexId = -1; // -1 represents startPos
 
             int totalPoints = waypoints.Count;
 
@@ -630,25 +630,24 @@ namespace TriangulationNavigation
                 // 1. Update Right side of funnel
                 if (Orient2D(portalApex, portalRight, right) <= 0.0f)
                 {
-                    // Tighten if right wall is at apex, left wall is at apex, or right hasn't crossed left
-                    if (apexIndex == rightIndex || apexIndex == leftIndex || Orient2D(portalApex, portalLeft, right) > 0.0f)
+                    if (apexIndex == rightIndex || Orient2D(portalApex, portalLeft, right) > 0.0f)
                     {
                         portalRight = right;
                         rightIndex = i;
                     }
                     else
                     {
-                        // Right wall crossed Left wall -> add left apex corner if index advanced
-                        if (leftIndex > lastAddedIndex)
+                        // Collapse to left apex corner
+                        int leftVertId = leftPortalsEdgeIndices[leftIndex];
+                        if (leftVertId < 0 || leftVertId != lastAddedVertexId)
                         {
                             simplifiedWaypoints.Add(portalLeft);
-                            lastAddedIndex = leftIndex;
+                            lastAddedVertexId = leftVertId;
                         }
 
                         portalApex = portalLeft;
                         apexIndex = leftIndex;
 
-                        // Reset funnel to new apex
                         portalLeft = portalApex;
                         portalRight = portalApex;
                         leftIndex = apexIndex;
@@ -662,25 +661,24 @@ namespace TriangulationNavigation
                 // 2. Update Left side of funnel
                 if (Orient2D(portalApex, portalLeft, left) >= 0.0f)
                 {
-                    // Tighten if left wall is at apex, right wall is at apex, or left hasn't crossed right
-                    if (apexIndex == leftIndex || apexIndex == rightIndex || Orient2D(portalApex, portalRight, left) < 0.0f)
+                    if (apexIndex == leftIndex || Orient2D(portalApex, portalRight, left) < 0.0f)
                     {
                         portalLeft = left;
                         leftIndex = i;
                     }
                     else
                     {
-                        // Left wall crossed Right wall -> add right apex corner if index advanced
-                        if (rightIndex > lastAddedIndex)
+                        // Collapse to right apex corner
+                        int rightVertId = rightPortalsEdgeIndices[rightIndex];
+                        if (rightVertId < 0 || rightVertId != lastAddedVertexId)
                         {
                             simplifiedWaypoints.Add(portalRight);
-                            lastAddedIndex = rightIndex;
+                            lastAddedVertexId = rightVertId;
                         }
 
                         portalApex = portalRight;
                         apexIndex = rightIndex;
 
-                        // Reset funnel to new apex
                         portalLeft = portalApex;
                         portalRight = portalApex;
                         leftIndex = apexIndex;
@@ -692,8 +690,8 @@ namespace TriangulationNavigation
                 }
             }
 
-            // Append final destination if the last added waypoint was not the final index
-            if (lastAddedIndex < totalPoints - 1)
+            // Append final destination if the loop ended before reaching endPos
+            if (apexIndex < totalPoints - 1)
             {
                 simplifiedWaypoints.Add(endPos);
             }

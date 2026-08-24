@@ -61,6 +61,7 @@ public class ManualAgentController : MonoBehaviour
         if (path.success)
         {
             agent.waypoints = path.waypoints;
+            agent.simplifiedWaypoints = path.simplifiedWaypoints;
             agent.followingPath = true;
             agent.currentWaypointIndex = 0;
         }
@@ -80,6 +81,7 @@ public class ManualAgentController : MonoBehaviour
         if (path.success)
         {
             agent.waypoints = path.waypoints;
+            agent.simplifiedWaypoints = path.simplifiedWaypoints;
             agent.followingPath = true;
             agent.destination = pos;
             agent.currentWaypointIndex = 0;
