@@ -573,11 +573,12 @@ namespace TriangulationNavigation
                 leftPortalsEdges[i + 1] = leftPortalEdge;
                 rightPortalsEdges[i + 1] = rightPortalEdge;
 
-                leftPortalsEdgeIndices[i + 1] = pFinal;
-                rightPortalsEdgeIndices[i + 1] = qFinal;
+                leftPortalsEdgeIndices[i + 1] = qFinal;
+                rightPortalsEdgeIndices[i + 1] = pFinal;
             }
 
-            SimplifyPathEdgesInner(waypoints, leftPortalsEdges, rightPortalsEdges, leftPortalsEdgeIndices, rightPortalsEdgeIndices, simplifiedWaypoints);
+            List<int> simplifiedIndices = new List<int>();
+            SimplifyPathEdgesInner(waypoints, leftPortalsEdges, rightPortalsEdges, leftPortalsEdgeIndices, rightPortalsEdgeIndices, simplifiedWaypoints, simplifiedIndices);
 
             // waypoints.Clear();
             // for (int i = 0; i < simplifiedWaypoints.Count; i++)
@@ -604,13 +605,19 @@ namespace TriangulationNavigation
             List<Float2> rightPortalsEdges,
             List<int> leftPortalsEdgeIndices,
             List<int> rightPortalsEdgeIndices,
-            List<Float2> simplifiedWaypoints)
+            List<Float2> simplifiedWaypoints,
+            List<int> simplifiedIndices)
         {
+            simplifiedWaypoints.Clear();
+            simplifiedIndices.Clear();
+
             Float2 startPos = waypoints[0];
             Float2 endPos = waypoints[waypoints.Count - 1];
 
             simplifiedWaypoints.Add(startPos);
+            simplifiedIndices.Add(-1); // -1 for start position
 
+            // Initialize funnel state
             Float2 portalApex = startPos;
             Float2 portalLeft = startPos;
             Float2 portalRight = startPos;
@@ -618,7 +625,9 @@ namespace TriangulationNavigation
             int apexIndex = 0;
             int leftIndex = 0;
             int rightIndex = 0;
-            int lastAddedVertexId = -1; // -1 represents startPos
+
+            // Sentinel ID for the last added triangulation vertex ID (-1 for startPos)
+            int lastAddedVertId = -1;
 
             int totalPoints = waypoints.Count;
 
@@ -632,22 +641,27 @@ namespace TriangulationNavigation
                 {
                     if (apexIndex == rightIndex || Orient2D(portalApex, portalLeft, right) > 0.0f)
                     {
+                        // Tighten right wall
                         portalRight = right;
                         rightIndex = i;
                     }
                     else
                     {
-                        // Collapse to left apex corner
+                        // Right wall crossed Left wall -> collapse to left apex corner
                         int leftVertId = leftPortalsEdgeIndices[leftIndex];
-                        if (leftVertId < 0 || leftVertId != lastAddedVertexId)
+
+                        // Index deduplication check
+                        if (leftVertId < 0 || leftVertId != lastAddedVertId)
                         {
                             simplifiedWaypoints.Add(portalLeft);
-                            lastAddedVertexId = leftVertId;
+                            simplifiedIndices.Add(leftVertId);
+                            lastAddedVertId = leftVertId;
                         }
 
                         portalApex = portalLeft;
                         apexIndex = leftIndex;
 
+                        // Reset funnel
                         portalLeft = portalApex;
                         portalRight = portalApex;
                         leftIndex = apexIndex;
@@ -663,22 +677,27 @@ namespace TriangulationNavigation
                 {
                     if (apexIndex == leftIndex || Orient2D(portalApex, portalRight, left) < 0.0f)
                     {
+                        // Tighten left wall
                         portalLeft = left;
                         leftIndex = i;
                     }
                     else
                     {
-                        // Collapse to right apex corner
+                        // Left wall crossed Right wall -> collapse to right apex corner
                         int rightVertId = rightPortalsEdgeIndices[rightIndex];
-                        if (rightVertId < 0 || rightVertId != lastAddedVertexId)
+
+                        // Index deduplication check
+                        if (rightVertId < 0 || rightVertId != lastAddedVertId)
                         {
                             simplifiedWaypoints.Add(portalRight);
-                            lastAddedVertexId = rightVertId;
+                            simplifiedIndices.Add(rightVertId);
+                            lastAddedVertId = rightVertId;
                         }
 
                         portalApex = portalRight;
                         apexIndex = rightIndex;
 
+                        // Reset funnel
                         portalLeft = portalApex;
                         portalRight = portalApex;
                         leftIndex = apexIndex;
@@ -690,11 +709,41 @@ namespace TriangulationNavigation
                 }
             }
 
-            // Append final destination if the loop ended before reaching endPos
+            // Append final destination if funnel didn't finish at target
             if (apexIndex < totalPoints - 1)
             {
                 simplifiedWaypoints.Add(endPos);
+                simplifiedIndices.Add(-1);
             }
+
+            PrintDebugInfo(leftPortalsEdges, rightPortalsEdges, leftPortalsEdgeIndices, rightPortalsEdgeIndices, simplifiedWaypoints, simplifiedIndices);
+        }
+
+        private void PrintDebugInfo(
+            List<Float2> leftEdges,
+            List<Float2> rightEdges,
+            List<int> leftIndices,
+            List<int> rightIndices,
+            List<Float2> simplifiedWaypoints,
+            List<int> simplifiedIndices)
+        {
+            System.Text.StringBuilder sb = new System.Text.StringBuilder();
+
+            sb.AppendLine("=== PORTAL INPUT DATA ===");
+            for (int i = 0; i < leftEdges.Count; i++)
+            {
+                int lId = (i < leftIndices.Count) ? leftIndices[i] : -1;
+                int rId = (i < rightIndices.Count) ? rightIndices[i] : -1;
+                sb.AppendLine($"Portal [{i}] | Left: {leftEdges[i]} (ID: {lId}) | Right: {rightEdges[i]} (ID: {rId})");
+            }
+
+            sb.AppendLine("\n=== SIMPLIFIED PATH RESULT ===");
+            for (int i = 0; i < simplifiedWaypoints.Count; i++)
+            {
+                sb.AppendLine($"Waypoint [{i}] | Pos: {simplifiedWaypoints[i]} | VertID: {simplifiedIndices[i]}");
+            }
+
+            UnityEngine.Debug.Log(sb.ToString());
         }
 
         float Orient2D(Float2 a, Float2 b, Float2 c)
