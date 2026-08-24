@@ -543,18 +543,6 @@ namespace TriangulationNavigation
                 return;
             }
 
-            List<Float2> leftPortalsEdges = new List<Float2>();
-            List<Float2> rightPortalsEdges = new List<Float2>();
-
-            leftPortalsEdges.Resize(waypointIndicesCount);
-            rightPortalsEdges.Resize(waypointIndicesCount);
-
-            leftPortalsEdges[0] = nodePositions[waypointIndices[0]];
-            rightPortalsEdges[0] = nodePositions[waypointIndices[0]];
-
-            leftPortalsEdges[waypointIndicesCount - 1] = nodePositions[waypointIndices[waypointIndicesCount - 1]];
-            rightPortalsEdges[waypointIndicesCount - 1] = nodePositions[waypointIndices[waypointIndicesCount - 1]];
-
             List<int> leftPortalsEdgeIndices = new List<int>();
             List<int> rightPortalsEdgeIndices = new List<int>();
 
@@ -580,31 +568,19 @@ namespace TriangulationNavigation
                 int p = navMesh.delaunator.triangles[edgeIndex];
                 int q = navMesh.delaunator.triangles[Delaunator.NextHalfedge(edgeIndex)];
 
-                int pFinal = p;
-                int qFinal = q;
-
                 Float2 perpendicularDirection = navMesh.allPoints[p] - nodePositions[waypointIndex];
+                bool swap = pathDirection.Cross(perpendicularDirection) < 0.0f;
 
-                if (pathDirection.Cross(perpendicularDirection) < 0.0f)
-                {
-                    pFinal = q;
-                    qFinal = p;
-                }
-
-                leftPortalsEdges[i + 1] = navMesh.allPoints[qFinal];
-                rightPortalsEdges[i + 1] = navMesh.allPoints[pFinal];
-
-                leftPortalsEdgeIndices[i + 1] = qFinal;
-                rightPortalsEdgeIndices[i + 1] = pFinal;
+                leftPortalsEdgeIndices[i + 1] = swap ? p : q;
+                rightPortalsEdgeIndices[i + 1] = swap ? q : p;
             }
 
             List<int> simplifiedIndices = new List<int>();
             SimplifyPathEdgesInner(
                 waypoints,
-                leftPortalsEdges,
-                rightPortalsEdges,
                 leftPortalsEdgeIndices,
                 rightPortalsEdgeIndices,
+                navMesh,
                 simplifiedWaypoints,
                 simplifiedIndices);
 
@@ -627,12 +603,11 @@ namespace TriangulationNavigation
             UnityEngine.Debug.Log(s);
         }
 
-        public void SimplifyPathEdgesInner(
+        void SimplifyPathEdgesInner(
             List<Float2> waypoints,
-            List<Float2> leftPortalsEdges,
-            List<Float2> rightPortalsEdges,
             List<int> leftPortalsEdgeIndices,
             List<int> rightPortalsEdgeIndices,
+            NavMesh navMesh,
             List<Float2> simplifiedWaypoints,
             List<int> simplifiedIndices)
         {
@@ -658,32 +633,36 @@ namespace TriangulationNavigation
                 int activeRightVertId = rightPortalsEdgeIndices[rightIndex];
 
                 // 1. Update Right side of funnel
+                Float2 currentRightPos = GetPortalPosition(i, currentRightVertId, waypoints, navMesh);
+                Float2 activeRightPos = GetPortalPosition(rightIndex, activeRightVertId, waypoints, navMesh);
+
                 bool isRightTightening = (rightIndex == apexIndex) ||
-                                         (Orient2D(apexPos, rightPortalsEdges[rightIndex], rightPortalsEdges[i]) <= 0.0f);
+                                         (Orient2D(apexPos, activeRightPos, currentRightPos) <= 0.0f);
 
                 if (isRightTightening)
                 {
                     bool sameAsLeft = (currentRightVertId != -1 && currentRightVertId == activeLeftVertId);
                     bool sameAsApex = (currentRightVertId != -1 && apexVertId != -1 && currentRightVertId == apexVertId);
 
+                    Float2 activeLeftPos = GetPortalPosition(leftIndex, activeLeftVertId, waypoints, navMesh);
+
                     if (rightIndex == apexIndex || sameAsLeft || sameAsApex ||
-                        Orient2D(apexPos, leftPortalsEdges[leftIndex], rightPortalsEdges[i]) >= 0.0f)
+                        Orient2D(apexPos, activeLeftPos, currentRightPos) >= 0.0f)
                     {
                         rightIndex = i;
                     }
                     else
                     {
-                        // Right wall crossed Left wall -> collapse to left apex corner
                         int leftVertId = activeLeftVertId;
 
                         if (leftVertId < 0 || leftVertId != lastAddedVertId)
                         {
-                            simplifiedWaypoints.Add(leftPortalsEdges[leftIndex]);
+                            simplifiedWaypoints.Add(activeLeftPos);
                             simplifiedIndices.Add(leftVertId);
                             lastAddedVertId = leftVertId;
                         }
 
-                        apexPos = leftPortalsEdges[leftIndex];
+                        apexPos = activeLeftPos;
                         apexIndex = leftIndex;
                         apexVertId = leftVertId;
 
@@ -696,32 +675,36 @@ namespace TriangulationNavigation
                 }
 
                 // 2. Update Left side of funnel
+                Float2 currentLeftPos = GetPortalPosition(i, currentLeftVertId, waypoints, navMesh);
+                Float2 activeLeftPosCurrent = GetPortalPosition(leftIndex, activeLeftVertId, waypoints, navMesh);
+
                 bool isLeftTightening = (leftIndex == apexIndex) ||
-                                        (Orient2D(apexPos, leftPortalsEdges[leftIndex], leftPortalsEdges[i]) >= 0.0f);
+                                        (Orient2D(apexPos, activeLeftPosCurrent, currentLeftPos) >= 0.0f);
 
                 if (isLeftTightening)
                 {
                     bool sameAsRight = (currentLeftVertId != -1 && currentLeftVertId == activeRightVertId);
                     bool sameAsApex = (currentLeftVertId != -1 && apexVertId != -1 && currentLeftVertId == apexVertId);
 
+                    Float2 activeRightPosCurrent = GetPortalPosition(rightIndex, activeRightVertId, waypoints, navMesh);
+
                     if (leftIndex == apexIndex || sameAsRight || sameAsApex ||
-                        Orient2D(apexPos, rightPortalsEdges[rightIndex], leftPortalsEdges[i]) <= 0.0f)
+                        Orient2D(apexPos, activeRightPosCurrent, currentLeftPos) <= 0.0f)
                     {
                         leftIndex = i;
                     }
                     else
                     {
-                        // Left wall crossed Right wall -> collapse to right apex corner
                         int rightVertId = activeRightVertId;
 
                         if (rightVertId < 0 || rightVertId != lastAddedVertId)
                         {
-                            simplifiedWaypoints.Add(rightPortalsEdges[rightIndex]);
+                            simplifiedWaypoints.Add(activeRightPosCurrent);
                             simplifiedIndices.Add(rightVertId);
                             lastAddedVertId = rightVertId;
                         }
 
-                        apexPos = rightPortalsEdges[rightIndex];
+                        apexPos = activeRightPosCurrent;
                         apexIndex = rightIndex;
                         apexVertId = rightVertId;
 
@@ -741,6 +724,11 @@ namespace TriangulationNavigation
             }
 
             // PrintDebugInfo(leftPortalsEdges, rightPortalsEdges, leftPortalsEdgeIndices, rightPortalsEdgeIndices, simplifiedWaypoints, simplifiedIndices);
+        }
+
+        Float2 GetPortalPosition(int index, int vertId, List<Float2> waypoints, NavMesh navMesh)
+        {
+            return vertId >= 0 ? navMesh.allPoints[vertId] : waypoints[index];
         }
 
         private void PrintDebugInfo(
