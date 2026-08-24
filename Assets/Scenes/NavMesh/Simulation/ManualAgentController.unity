@@ -696,7 +696,8 @@ MonoBehaviour:
     softLocalAvoidance: 0
   worldSize: 100
   displayNavmeshGizmos: 1
-  displayFunnelGizmos: 1
+  displayFunnelGizmos: 0
+  displayFunnelPointNumbers: 0
   displayUnwalkableEdges: 1
   debugObstacles: 0
   agentTransforms: []

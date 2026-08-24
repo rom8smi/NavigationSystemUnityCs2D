@@ -512,17 +512,17 @@ namespace TriangulationNavigation
                 return;
             }
 
-            List<Float2> leftPortalsEges = new List<Float2>();
-            List<Float2> rightPortalsEges = new List<Float2>();
+            List<Float2> leftPortalsEdges = new List<Float2>();
+            List<Float2> rightPortalsEdges = new List<Float2>();
 
-            leftPortalsEges.Resize(waypointIndices.Count);
-            rightPortalsEges.Resize(waypointIndices.Count);
+            leftPortalsEdges.Resize(waypointIndices.Count);
+            rightPortalsEdges.Resize(waypointIndices.Count);
 
-            leftPortalsEges[0] = nodePositions[waypointIndices[0]];
-            rightPortalsEges[0] = nodePositions[waypointIndices[0]];
+            leftPortalsEdges[0] = nodePositions[waypointIndices[0]];
+            rightPortalsEdges[0] = nodePositions[waypointIndices[0]];
 
-            leftPortalsEges[waypointIndices.Count - 1] = nodePositions[waypointIndices[waypointIndices.Count - 1]];
-            rightPortalsEges[waypointIndices.Count - 1] = nodePositions[waypointIndices[waypointIndices.Count - 1]];
+            leftPortalsEdges[waypointIndices.Count - 1] = nodePositions[waypointIndices[waypointIndices.Count - 1]];
+            rightPortalsEdges[waypointIndices.Count - 1] = nodePositions[waypointIndices[waypointIndices.Count - 1]];
 
             for (int i = 0; i < waypointIndices.Count - 2; i++)
             {
@@ -548,12 +548,12 @@ namespace TriangulationNavigation
                 Float2 leftPortalEdge = nodePositions[waypointIndex] - perpendicularDirection;
                 Float2 rightPortalEdge = nodePositions[waypointIndex] + perpendicularDirection;
 
-                leftPortalsEges[i + 1] = leftPortalEdge;
-                rightPortalsEges[i + 1] = rightPortalEdge;
+                leftPortalsEdges[i + 1] = leftPortalEdge;
+                rightPortalsEdges[i + 1] = rightPortalEdge;
             }
 
             List<Float2> simplifiedWaypoints = new List<Float2>();
-            SimplifyPath2(waypoints, leftPortalsEges, rightPortalsEges, simplifiedWaypoints);
+            SimplifyPathEdgesInner(waypoints, leftPortalsEdges, rightPortalsEdges, simplifiedWaypoints);
 
             waypoints.Clear();
             for (int i = 0; i < simplifiedWaypoints.Count; i++)
@@ -562,11 +562,11 @@ namespace TriangulationNavigation
             }
         }
 
-        public void SimplifyPath2(
-        List<Float2> waypoints,
-        List<Float2> leftPortalsEges,
-        List<Float2> rightPortalsEges,
-        List<Float2> simplifiedWaypoints)
+        public void SimplifyPathEdgesInner(
+            List<Float2> waypoints,
+            List<Float2> leftPortalsEdges,
+            List<Float2> rightPortalsEdges,
+            List<Float2> simplifiedWaypoints)
         {
             Float2 startPos = waypoints[0];
             Float2 endPos = waypoints[waypoints.Count - 1];
@@ -582,17 +582,17 @@ namespace TriangulationNavigation
             int leftIndex = 0;
             int rightIndex = 0;
 
-            int totalPoints = leftPortalsEges.Count;
+            int totalPoints = waypoints.Count;
 
             for (int i = 1; i < totalPoints; i++)
             {
-                Float2 left = leftPortalsEges[i];
-                Float2 right = rightPortalsEges[i];
+                Float2 left = leftPortalsEdges[i];
+                Float2 right = rightPortalsEdges[i];
 
                 // 1. Update Right side of funnel
-                if (TriArea2(portalApex, portalRight, right) <= 0.0f)
+                if (Orient2D(portalApex, portalRight, right) <= 0.0f)
                 {
-                    if ((portalApex.x == portalRight.x && portalApex.y == portalRight.y) || TriArea2(portalApex, portalLeft, right) > 0.0f)
+                    if ((portalApex.x == portalRight.x && portalApex.y == portalRight.y) || Orient2D(portalApex, portalLeft, right) > 0.0f)
                     {
                         // Tighten right wall
                         portalRight = right;
@@ -617,9 +617,9 @@ namespace TriangulationNavigation
                 }
 
                 // 2. Update Left side of funnel
-                if (TriArea2(portalApex, portalLeft, left) >= 0.0f)
+                if (Orient2D(portalApex, portalLeft, left) >= 0.0f)
                 {
-                    if ((portalApex.x == portalLeft.x && portalApex.y == portalLeft.y) || TriArea2(portalApex, portalRight, left) < 0.0f)
+                    if ((portalApex.x == portalLeft.x && portalApex.y == portalLeft.y) || Orient2D(portalApex, portalRight, left) < 0.0f)
                     {
                         // Tighten left wall
                         portalLeft = left;
@@ -651,198 +651,18 @@ namespace TriangulationNavigation
             }
         }
 
-        float Cross(Float2 a, Float2 b)
+        float Orient2D(Float2 a, Float2 b, Float2 c)
         {
-            return a.x * b.y - a.y * b.x;
+            return Orient2D(a.x, a.y, b.x, b.y, c.x, c.y);
         }
 
-        float TriArea2(Float2 a, Float2 b, Float2 c)
+        public float Orient2D(float ax, float ay, float bx, float by, float cx, float cy)
         {
-            return Cross(b - a, c - a);
-        }
-
-        void SimplifyPathEdges1(List<Float2> waypoints, List<int> waypointIndices, NavMesh navMesh)
-        {
-            if (waypointIndices.Count <= 2)
-            {
-                return;
-            }
-
-            List<Float2> corridor = new List<Float2>();
-            for (int i = waypoints.Count - 1; i >= 0; i--)
-            {
-                corridor.Add(waypoints[i]);
-            }
-
-            List<Float2> portalLeft = new List<Float2>();
-            List<Float2> portalRight = new List<Float2>();
-            portalLeft.Add(corridor[0]);
-            portalRight.Add(corridor[0]);
-
-            for (int i = 1; i < corridor.Count - 1; i++)
-            {
-                int nodeIndex = -1;
-                for (int j = 0; j < nodePositions.Count; j++)
-                {
-                    if (SamePoint(nodePositions[j], corridor[i]))
-                    {
-                        nodeIndex = j;
-                        break;
-                    }
-                }
-
-                int edgeIndex = -1;
-                for (int j = 0; j < nodeEdgeRefs.Count; j++)
-                {
-                    if (nodeEdgeRefs[j] == nodeIndex)
-                    {
-                        edgeIndex = j;
-                        break;
-                    }
-                }
-
-                if (edgeIndex == -1)
-                {
-                    return;
-                }
-
-                int p = navMesh.delaunator.triangles[edgeIndex];
-                int q = navMesh.delaunator.triangles[Delaunator.NextHalfedge(edgeIndex)];
-                Float2 portalP = navMesh.allPoints[p];
-                Float2 portalQ = navMesh.allPoints[q];
-                Float2 travelDirection = corridor[i + 1] - corridor[i - 1];
-
-                if (SignedArea2(corridor[i - 1], corridor[i - 1] + travelDirection, portalP) > 0.0f)
-                {
-                    portalLeft.Add(portalP);
-                    portalRight.Add(portalQ);
-                }
-                else
-                {
-                    portalLeft.Add(portalQ);
-                    portalRight.Add(portalP);
-                }
-            }
-
-            portalLeft.Add(corridor[corridor.Count - 1]);
-            portalRight.Add(corridor[corridor.Count - 1]);
-
-            List<Float2> funnelPath = new List<Float2>();
-            Float2 apex = portalLeft[0];
-            Float2 left = apex;
-            Float2 right = apex;
-            int apexIndex = 0;
-            int leftIndex = 0;
-            int rightIndex = 0;
-            funnelPath.Add(apex);
-
-            for (int i = 1; i < portalLeft.Count; i++)
-            {
-                Float2 newLeft = portalLeft[i];
-                Float2 newRight = portalRight[i];
-
-                if (SignedArea2(apex, right, newRight) <= 0.0f)
-                {
-                    if (SamePoint(apex, right) || SignedArea2(apex, left, newRight) > 0.0f)
-                    {
-                        right = newRight;
-                        rightIndex = i;
-                    }
-                    else
-                    {
-                        funnelPath.Add(left);
-                        apex = left;
-                        apexIndex = leftIndex;
-                        left = apex;
-                        right = apex;
-                        leftIndex = apexIndex;
-                        rightIndex = apexIndex;
-                        i = apexIndex;
-                        continue;
-                    }
-                }
-
-                if (SignedArea2(apex, left, newLeft) >= 0.0f)
-                {
-                    if (SamePoint(apex, left) || SignedArea2(apex, right, newLeft) < 0.0f)
-                    {
-                        left = newLeft;
-                        leftIndex = i;
-                    }
-                    else
-                    {
-                        funnelPath.Add(right);
-                        apex = right;
-                        apexIndex = rightIndex;
-                        left = apex;
-                        right = apex;
-                        leftIndex = apexIndex;
-                        rightIndex = apexIndex;
-                        i = apexIndex;
-                        continue;
-                    }
-                }
-            }
-
-            funnelPath.Add(corridor[corridor.Count - 1]);
-            if (!IsPathWalkable(funnelPath, navMesh))
-            {
-                funnelPath = PullStringThroughWaypoints(corridor, navMesh);
-            }
-
-            waypoints.Clear();
-            for (int i = funnelPath.Count - 1; i >= 0; i--)
-            {
-                waypoints.Add(funnelPath[i]);
-            }
-        }
-
-        List<Float2> PullStringThroughWaypoints(List<Float2> corridor, NavMesh navMesh)
-        {
-            List<Float2> pulledPath = new List<Float2>();
-            int firstVisibleIndex = 0;
-            pulledPath.Add(corridor[firstVisibleIndex]);
-
-            while (firstVisibleIndex < corridor.Count - 1)
-            {
-                int furthestVisibleIndex = firstVisibleIndex + 1;
-                for (int i = furthestVisibleIndex + 1; i < corridor.Count; i++)
-                {
-                    if (navMesh.CanPointsBeReachedInStraightLine(corridor[firstVisibleIndex], corridor[i]))
-                    {
-                        furthestVisibleIndex = i;
-                    }
-                }
-
-                firstVisibleIndex = furthestVisibleIndex;
-                pulledPath.Add(corridor[firstVisibleIndex]);
-            }
-
-            return pulledPath;
-        }
-
-        bool IsPathWalkable(List<Float2> path, NavMesh navMesh)
-        {
-            for (int i = 0; i < path.Count - 1; i++)
-            {
-                if (!navMesh.CanPointsBeReachedInStraightLine(path[i], path[i + 1]))
-                {
-                    return false;
-                }
-            }
-
-            return true;
-        }
-
-        bool SamePoint(Float2 a, Float2 b)
-        {
-            return a.x == b.x && a.y == b.y;
-        }
-
-        float SignedArea2(Float2 a, Float2 b, Float2 c)
-        {
-            return (b.x - a.x) * (c.y - a.y) - (b.y - a.y) * (c.x - a.x);
-
+            float acx = ax - cx;
+            float bcx = bx - cx;
+            float acy = ay - cy;
+            float bcy = by - cy;
+            return acx * bcy - acy * bcx;
         }
 
         void SimplifyPathCorners(List<Float2> waypoints, NavMesh navMesh)
