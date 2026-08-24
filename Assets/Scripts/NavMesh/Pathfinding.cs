@@ -134,7 +134,7 @@ namespace TriangulationNavigation
                     if (opposite != -1)
                     {
                         if (navMesh.trianglesWalkability[Delaunator.TriangleOfEdge(e)] == -1 &&
-                        navMesh.trianglesWalkability[Delaunator.TriangleOfEdge(opposite)] == -1)
+                            navMesh.trianglesWalkability[Delaunator.TriangleOfEdge(opposite)] == -1)
                         {
                             walkableIndices.Add(i);
                             if (e > opposite)
@@ -223,6 +223,32 @@ namespace TriangulationNavigation
             if (!path.success && path.lowestHCostNode < nodesCount)
             {
                 Float2 newTargetPos = nodePositions[path.lowestHCostNode];
+
+                if (triangleEdgesMode)
+                {
+                    int e = nodeEdgeRefsInverted[path.lowestHCostNode];
+                    if (e != -1)
+                    {
+                        int p = navMesh.delaunator.triangles[e];
+                        int q = navMesh.delaunator.triangles[Delaunator.NextHalfedge(e)];
+
+                        Float2 newTargetPosP = navMesh.FindNearestObstacleHullEdgePointToTarget(p, newTargetPos, targetPos);
+                        Float2 newTargetPosQ = navMesh.FindNearestObstacleHullEdgePointToTarget(q, newTargetPos, targetPos);
+
+                        float distanceSqrP = (newTargetPosP - targetPos).LengthSquared();
+                        float distanceSqrQ = (newTargetPosQ - targetPos).LengthSquared();
+
+                        if (distanceSqrP < distanceSqrQ)
+                        {
+                            newTargetPos = newTargetPosP;
+                        }
+                        else
+                        {
+                            newTargetPos = newTargetPosQ;
+                        }
+                    }
+                }
+
                 newTargetPos = navMesh.FindNearestObstacleHullEdgePointToTarget(path.lowestHCostNode, newTargetPos, targetPos);
                 path = FindPathWithOrWithoutIterations(startPos, newTargetPos, navMesh);
             }
@@ -580,13 +606,13 @@ namespace TriangulationNavigation
             List<int> simplifiedIndices = new List<int>();
             SimplifyPathEdgesInner(waypoints, leftPortalsEdges, rightPortalsEdges, leftPortalsEdgeIndices, rightPortalsEdgeIndices, simplifiedWaypoints, simplifiedIndices);
 
-            // waypoints.Clear();
-            // for (int i = 0; i < simplifiedWaypoints.Count; i++)
-            // {
-            //     waypoints.Add(simplifiedWaypoints[i]);
-            // }
+            waypoints.Clear();
+            for (int i = 0; i < simplifiedWaypoints.Count; i++)
+            {
+                waypoints.Add(simplifiedWaypoints[i]);
+            }
 
-            DebugWaypoints(simplifiedWaypoints);
+            // DebugWaypoints(simplifiedWaypoints);
         }
 
         void DebugWaypoints(List<Float2> waypoints)
@@ -608,9 +634,6 @@ namespace TriangulationNavigation
             List<Float2> simplifiedWaypoints,
             List<int> simplifiedIndices)
         {
-            simplifiedWaypoints.Clear();
-            simplifiedIndices.Clear();
-
             Float2 startPos = waypoints[0];
             Float2 endPos = waypoints[waypoints.Count - 1];
 
@@ -639,7 +662,7 @@ namespace TriangulationNavigation
                 // 1. Update Right side of funnel
                 if (Orient2D(portalApex, portalRight, right) <= 0.0f)
                 {
-                    if (apexIndex == rightIndex || Orient2D(portalApex, portalLeft, right) > 0.0f)
+                    if (apexIndex == rightIndex || Orient2D(portalApex, portalLeft, right) >= 0.0f)
                     {
                         // Tighten right wall
                         portalRight = right;
@@ -675,7 +698,7 @@ namespace TriangulationNavigation
                 // 2. Update Left side of funnel
                 if (Orient2D(portalApex, portalLeft, left) >= 0.0f)
                 {
-                    if (apexIndex == leftIndex || Orient2D(portalApex, portalRight, left) < 0.0f)
+                    if (apexIndex == leftIndex || Orient2D(portalApex, portalRight, left) <= 0.0f)
                     {
                         // Tighten left wall
                         portalLeft = left;
@@ -716,7 +739,7 @@ namespace TriangulationNavigation
                 simplifiedIndices.Add(-1);
             }
 
-            PrintDebugInfo(leftPortalsEdges, rightPortalsEdges, leftPortalsEdgeIndices, rightPortalsEdgeIndices, simplifiedWaypoints, simplifiedIndices);
+            // PrintDebugInfo(leftPortalsEdges, rightPortalsEdges, leftPortalsEdgeIndices, rightPortalsEdgeIndices, simplifiedWaypoints, simplifiedIndices);
         }
 
         private void PrintDebugInfo(

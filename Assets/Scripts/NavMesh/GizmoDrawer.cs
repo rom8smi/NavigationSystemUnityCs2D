@@ -76,7 +76,11 @@ namespace TriangulationNavigation
             if (agent.followingPath)
             {
                 DrawPath(agent.currentWaypointIndex, position, agent.waypoints, agent.waypoints.Count, Color.black);
-                DrawPath(agent.currentWaypointIndex, position, agent.simplifiedWaypoints, agent.simplifiedWaypoints.Count, Color.green);
+
+                if (agent.simplifiedWaypoints != null && agent.simplifiedWaypoints.Count > 0)
+                {
+                    DrawPath(agent.currentWaypointIndex, position, agent.simplifiedWaypoints, agent.simplifiedWaypoints.Count, Color.green);
+                }
             }
         }
 
