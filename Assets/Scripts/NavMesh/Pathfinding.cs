@@ -636,15 +636,11 @@ namespace TriangulationNavigation
             List<Float2> simplifiedWaypoints,
             List<int> simplifiedIndices)
         {
-            Float2 startPos = waypoints[0];
-            Float2 endPos = waypoints[waypoints.Count - 1];
+            int totalPoints = waypoints.Count;
+            Float2 apexPos = waypoints[0];
 
-            simplifiedWaypoints.Add(startPos);
+            simplifiedWaypoints.Add(apexPos);
             simplifiedIndices.Add(-1);
-
-            Float2 portalApex = startPos;
-            Float2 portalLeft = startPos;
-            Float2 portalRight = startPos;
 
             int apexIndex = 0;
             int leftIndex = 0;
@@ -653,13 +649,8 @@ namespace TriangulationNavigation
             int apexVertId = -1;
             int lastAddedVertId = -1;
 
-            int totalPoints = waypoints.Count;
-
             for (int i = 1; i < totalPoints; i++)
             {
-                Float2 left = leftPortalsEdges[i];
-                Float2 right = rightPortalsEdges[i];
-
                 int currentLeftVertId = leftPortalsEdgeIndices[i];
                 int currentRightVertId = rightPortalsEdgeIndices[i];
 
@@ -667,34 +658,35 @@ namespace TriangulationNavigation
                 int activeRightVertId = rightPortalsEdgeIndices[rightIndex];
 
                 // 1. Update Right side of funnel
-                if (Orient2D(portalApex, portalRight, right) <= 0.0f)
+                bool isRightTightening = (rightIndex == apexIndex) ||
+                                         (Orient2D(apexPos, rightPortalsEdges[rightIndex], rightPortalsEdges[i]) <= 0.0f);
+
+                if (isRightTightening)
                 {
                     bool sameAsLeft = (currentRightVertId != -1 && currentRightVertId == activeLeftVertId);
                     bool sameAsApex = (currentRightVertId != -1 && apexVertId != -1 && currentRightVertId == apexVertId);
 
-                    // Bypass geometric crossing check if indices match
-                    if (apexIndex == rightIndex || sameAsLeft || sameAsApex || Orient2D(portalApex, portalLeft, right) >= 0.0f)
+                    if (rightIndex == apexIndex || sameAsLeft || sameAsApex ||
+                        Orient2D(apexPos, leftPortalsEdges[leftIndex], rightPortalsEdges[i]) >= 0.0f)
                     {
-                        portalRight = right;
                         rightIndex = i;
                     }
                     else
                     {
+                        // Right wall crossed Left wall -> collapse to left apex corner
                         int leftVertId = activeLeftVertId;
 
                         if (leftVertId < 0 || leftVertId != lastAddedVertId)
                         {
-                            simplifiedWaypoints.Add(portalLeft);
+                            simplifiedWaypoints.Add(leftPortalsEdges[leftIndex]);
                             simplifiedIndices.Add(leftVertId);
                             lastAddedVertId = leftVertId;
                         }
 
-                        portalApex = portalLeft;
+                        apexPos = leftPortalsEdges[leftIndex];
                         apexIndex = leftIndex;
                         apexVertId = leftVertId;
 
-                        portalLeft = portalApex;
-                        portalRight = portalApex;
                         leftIndex = apexIndex;
                         rightIndex = apexIndex;
 
@@ -704,34 +696,35 @@ namespace TriangulationNavigation
                 }
 
                 // 2. Update Left side of funnel
-                if (Orient2D(portalApex, portalLeft, left) >= 0.0f)
+                bool isLeftTightening = (leftIndex == apexIndex) ||
+                                        (Orient2D(apexPos, leftPortalsEdges[leftIndex], leftPortalsEdges[i]) >= 0.0f);
+
+                if (isLeftTightening)
                 {
                     bool sameAsRight = (currentLeftVertId != -1 && currentLeftVertId == activeRightVertId);
                     bool sameAsApex = (currentLeftVertId != -1 && apexVertId != -1 && currentLeftVertId == apexVertId);
 
-                    // Bypass geometric crossing check if indices match
-                    if (apexIndex == leftIndex || sameAsRight || sameAsApex || Orient2D(portalApex, portalRight, left) <= 0.0f)
+                    if (leftIndex == apexIndex || sameAsRight || sameAsApex ||
+                        Orient2D(apexPos, rightPortalsEdges[rightIndex], leftPortalsEdges[i]) <= 0.0f)
                     {
-                        portalLeft = left;
                         leftIndex = i;
                     }
                     else
                     {
+                        // Left wall crossed Right wall -> collapse to right apex corner
                         int rightVertId = activeRightVertId;
 
                         if (rightVertId < 0 || rightVertId != lastAddedVertId)
                         {
-                            simplifiedWaypoints.Add(portalRight);
+                            simplifiedWaypoints.Add(rightPortalsEdges[rightIndex]);
                             simplifiedIndices.Add(rightVertId);
                             lastAddedVertId = rightVertId;
                         }
 
-                        portalApex = portalRight;
+                        apexPos = rightPortalsEdges[rightIndex];
                         apexIndex = rightIndex;
                         apexVertId = rightVertId;
 
-                        portalLeft = portalApex;
-                        portalRight = portalApex;
                         leftIndex = apexIndex;
                         rightIndex = apexIndex;
 
@@ -743,7 +736,7 @@ namespace TriangulationNavigation
 
             if (apexIndex < totalPoints - 1)
             {
-                simplifiedWaypoints.Add(endPos);
+                simplifiedWaypoints.Add(waypoints[totalPoints - 1]);
                 simplifiedIndices.Add(-1);
             }
 
