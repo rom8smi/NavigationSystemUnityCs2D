@@ -104,7 +104,7 @@ namespace TriangulationNavigation
 
         public void CreateNodesEdges(NavMesh navMesh)
         {
-            useIterations = true;
+            useIterations = false;
             costIncrement = 1.0f;
             openSet.Clear(nodes);
             nodes.Clear();
@@ -304,9 +304,9 @@ namespace TriangulationNavigation
                 targetPos = navMesh.TryMoveToWalkableArea(targetPos).position;
             }
 
-            if (nodesCount != navMesh.allPoints.Count)
+            if (!triangleEdgesMode && nodesCount != navMesh.allPoints.Count)
             {
-                GenericCode.Debug.Log($"Pathfinding nodes and triangulation points count does not match: {nodesCount}, {navMesh.allPoints.Count}");
+                Debug.Log($"Pathfinding nodes and triangulation points count does not match: {nodesCount}, {navMesh.allPoints.Count}");
             }
             Path path = FindPathToExactTarget(startPos, targetPos, navMesh);
             ClearPathSearch();
@@ -560,6 +560,18 @@ namespace TriangulationNavigation
             {
                 waypoints.Add(simplifiedWaypoints[i]);
             }
+
+            DebugWaypoints(waypoints);
+        }
+
+        void DebugWaypoints(List<Float2> waypoints)
+        {
+            string s = $"Simplified path {waypoints.Count}\n";
+            for (int i = 0; i < waypoints.Count; i++)
+            {
+                s += $"{i} {waypoints[i]}\n";
+            }
+            UnityEngine.Debug.Log(s);
         }
 
         public void SimplifyPathEdgesInner(
@@ -592,7 +604,8 @@ namespace TriangulationNavigation
                 // 1. Update Right side of funnel
                 if (Orient2D(portalApex, portalRight, right) <= 0.0f)
                 {
-                    if ((portalApex.x == portalRight.x && portalApex.y == portalRight.y) || Orient2D(portalApex, portalLeft, right) > 0.0f)
+                    // Index equality checks if right boundary is still at the apex
+                    if (apexIndex == rightIndex || Orient2D(portalApex, portalLeft, right) > 0.0f)
                     {
                         // Tighten right wall
                         portalRight = right;
@@ -619,7 +632,8 @@ namespace TriangulationNavigation
                 // 2. Update Left side of funnel
                 if (Orient2D(portalApex, portalLeft, left) >= 0.0f)
                 {
-                    if ((portalApex.x == portalLeft.x && portalApex.y == portalLeft.y) || Orient2D(portalApex, portalRight, left) < 0.0f)
+                    // Index equality checks if left boundary is still at the apex
+                    if (apexIndex == leftIndex || Orient2D(portalApex, portalRight, left) < 0.0f)
                     {
                         // Tighten left wall
                         portalLeft = left;
@@ -645,7 +659,7 @@ namespace TriangulationNavigation
             }
 
             // Ensure the final target position is appended
-            if (simplifiedWaypoints[simplifiedWaypoints.Count - 1].x != endPos.x && simplifiedWaypoints[simplifiedWaypoints.Count - 1].y != endPos.y)
+            if (apexIndex < totalPoints - 1)
             {
                 simplifiedWaypoints.Add(endPos);
             }
