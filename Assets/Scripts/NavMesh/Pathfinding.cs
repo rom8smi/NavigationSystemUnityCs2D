@@ -606,11 +606,11 @@ namespace TriangulationNavigation
             List<int> simplifiedIndices = new List<int>();
             SimplifyPathEdgesInner(waypoints, leftPortalsEdges, rightPortalsEdges, leftPortalsEdgeIndices, rightPortalsEdgeIndices, simplifiedWaypoints, simplifiedIndices);
 
-            waypoints.Clear();
-            for (int i = 0; i < simplifiedWaypoints.Count; i++)
-            {
-                waypoints.Add(simplifiedWaypoints[i]);
-            }
+            // waypoints.Clear();
+            // for (int i = 0; i < simplifiedWaypoints.Count; i++)
+            // {
+            //     waypoints.Add(simplifiedWaypoints[i]);
+            // }
 
             // DebugWaypoints(simplifiedWaypoints);
         }
@@ -678,6 +678,12 @@ namespace TriangulationNavigation
                         {
                             simplifiedWaypoints.Add(portalLeft);
                             simplifiedIndices.Add(leftVertId);
+
+                            if(leftVertId == 15)
+                            {
+                                UnityEngine.Debug.Log($"aaa1 {leftVertId} {apexIndex} {rightIndex} {Orient2D(portalApex, portalLeft, right)} | {portalApex} {portalLeft} {right}");
+                            }
+
                             lastAddedVertId = leftVertId;
                         }
 
@@ -714,6 +720,12 @@ namespace TriangulationNavigation
                         {
                             simplifiedWaypoints.Add(portalRight);
                             simplifiedIndices.Add(rightVertId);
+
+                            if(rightVertId == 15)
+                            {
+                                UnityEngine.Debug.Log($"aaa2 {rightVertId} {apexIndex} {leftIndex} {Orient2D(portalApex, portalRight, left)} | {portalApex} {portalRight} {left}");
+                            }
+
                             lastAddedVertId = rightVertId;
                         }
 
@@ -739,7 +751,7 @@ namespace TriangulationNavigation
                 simplifiedIndices.Add(-1);
             }
 
-            // PrintDebugInfo(leftPortalsEdges, rightPortalsEdges, leftPortalsEdgeIndices, rightPortalsEdgeIndices, simplifiedWaypoints, simplifiedIndices);
+            PrintDebugInfo(leftPortalsEdges, rightPortalsEdges, leftPortalsEdgeIndices, rightPortalsEdgeIndices, simplifiedWaypoints, simplifiedIndices);
         }
 
         private void PrintDebugInfo(
