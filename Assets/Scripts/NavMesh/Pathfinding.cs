@@ -640,8 +640,11 @@ namespace TriangulationNavigation
                 int activeLeftCornerIndex = leftPortalsEdgeIndices[leftIndex];
                 int activeRightCornerIndex = rightPortalsEdgeIndices[rightIndex];
 
-                Float2 currentRightPosition = GetPortalPosition(i, currentRightCornerIndex, waypoints, navMesh);
-                Float2 activeRightPosition = GetPortalPosition(rightIndex, activeRightCornerIndex, waypoints, navMesh);
+                Float2 currentRightPosition;
+                GetPortalPosition(i, currentRightCornerIndex, waypoints, navMesh, out currentRightPosition);
+
+                Float2 activeRightPosition;
+                GetPortalPosition(rightIndex, activeRightCornerIndex, waypoints, navMesh, out activeRightPosition);
 
                 bool isRightTightening = (rightIndex == apexIndex) ||
                                          (Orient2D(apexPosition, activeRightPosition, currentRightPosition) <= 0.0f);
@@ -651,7 +654,8 @@ namespace TriangulationNavigation
                     bool sameAsLeft = (currentRightCornerIndex != -1 && currentRightCornerIndex == activeLeftCornerIndex);
                     bool sameAsApex = (currentRightCornerIndex != -1 && apexCornerIndex != -1 && currentRightCornerIndex == apexCornerIndex);
 
-                    Float2 activeLeftPosition = GetPortalPosition(leftIndex, activeLeftCornerIndex, waypoints, navMesh);
+                    Float2 activeLeftPosition;
+                    GetPortalPosition(leftIndex, activeLeftCornerIndex, waypoints, navMesh, out activeLeftPosition);
 
                     if (rightIndex == apexIndex || sameAsLeft || sameAsApex ||
                         Orient2D(apexPosition, activeLeftPosition, currentRightPosition) >= 0.0f)
@@ -680,8 +684,11 @@ namespace TriangulationNavigation
                     }
                 }
 
-                Float2 currentLeftPosition = GetPortalPosition(i, currentLeftCornerIndex, waypoints, navMesh);
-                Float2 activeLeftPositionCurrent = GetPortalPosition(leftIndex, activeLeftCornerIndex, waypoints, navMesh);
+                Float2 currentLeftPosition;
+                GetPortalPosition(i, currentLeftCornerIndex, waypoints, navMesh, out currentLeftPosition);
+                
+                Float2 activeLeftPositionCurrent;
+                GetPortalPosition(leftIndex, activeLeftCornerIndex, waypoints, navMesh, out activeLeftPositionCurrent);
 
                 bool isLeftTightening = (leftIndex == apexIndex) ||
                                         (Orient2D(apexPosition, activeLeftPositionCurrent, currentLeftPosition) >= 0.0f);
@@ -691,7 +698,8 @@ namespace TriangulationNavigation
                     bool sameAsRight = (currentLeftCornerIndex != -1 && currentLeftCornerIndex == activeRightCornerIndex);
                     bool sameAsApex = (currentLeftCornerIndex != -1 && apexCornerIndex != -1 && currentLeftCornerIndex == apexCornerIndex);
 
-                    Float2 activeRightPositionCurrent = GetPortalPosition(rightIndex, activeRightCornerIndex, waypoints, navMesh);
+                    Float2 activeRightPositionCurrent;
+                    GetPortalPosition(rightIndex, activeRightCornerIndex, waypoints, navMesh, out activeRightPositionCurrent);
 
                     if (leftIndex == apexIndex || sameAsRight || sameAsApex ||
                         Orient2D(apexPosition, activeRightPositionCurrent, currentLeftPosition) <= 0.0f)
@@ -727,9 +735,14 @@ namespace TriangulationNavigation
             }
         }
 
-        Float2 GetPortalPosition(int index, int cornerIndex, List<Float2> waypoints, NavMesh navMesh)
+        void GetPortalPosition(
+            int index,
+            int cornerIndex,
+            List<Float2> waypoints,
+            NavMesh navMesh,
+            out Float2 position)
         {
-            return cornerIndex >= 0 ? navMesh.allPoints[cornerIndex] : waypoints[index];
+            position = cornerIndex >= 0 ? navMesh.allPoints[cornerIndex] : waypoints[index];
         }
 
         float Orient2D(Float2 a, Float2 b, Float2 c)
