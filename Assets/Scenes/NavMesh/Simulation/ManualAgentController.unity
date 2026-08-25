@@ -687,11 +687,17 @@ MonoBehaviour:
   - {fileID: 611547586}
   agentTypes:
   - radius: 0.5
+    isStatic: 0
     speed: 20
+    softLocalAvoidance: 0
   - radius: 0.7
+    isStatic: 0
     speed: 20
+    softLocalAvoidance: 0
   worldSize: 100
   displayNavmeshGizmos: 1
+  displayFunnelGizmos: 0
+  displayFunnelPointNumbers: 0
   displayUnwalkableEdges: 1
   debugObstacles: 0
   agentTransforms: []

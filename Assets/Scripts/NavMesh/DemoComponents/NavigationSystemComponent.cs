@@ -18,6 +18,8 @@ namespace TriangulationNavigation
         GizmoDrawer gizmoDrawer;
 
         public bool displayNavmeshGizmos;
+        public bool displayFunnelGizmos;
+        public bool displayFunnelPointNumbers;
         public bool displayUnwalkableEdges;
         public bool debugObstacles;
 
@@ -238,6 +240,7 @@ namespace TriangulationNavigation
             if (navigationSystem.navMeshDrawer != null)
             {
                 navigationSystem.navMeshDrawer.DrawNavMesh(navigationSystem.navMesh, displayNavmeshGizmos, displayUnwalkableEdges, cameraScaleMultiplier);
+                navigationSystem.navMeshDrawer.DrawNavMeshFunnelsGraph(navigationSystem.navMesh, navigationSystem.pathfinding, displayFunnelGizmos, displayFunnelPointNumbers, cameraScaleMultiplier);
                 navigationSystem.navMeshDrawer.DrawObstaclePushDirections(navigationSystem.navMesh, drawPushDirections, pushDirectionsDisplayPosition, pushDirectionsDisplaySize);
                 gizmoDrawer.DrawAgentsGizmos(showPaths, agentTransforms, navigationSystem.agents);
             }
@@ -257,8 +260,7 @@ namespace TriangulationNavigation
             for (int i = 0; i < navigationSystem.navMesh.allPoints.Count; i++)
             {
                 Float2 pos2d = navigationSystem.navMesh.allPoints[i];
-                Vector3 pos = new Vector3(pos2d.x, 0.0f, pos2d.y) - new Vector3(1.5f, 0.0f, -3.5f) * cameraScaleMultiplier;
-                UnityEditor.Handles.Label(pos, $"{i}");
+                navigationSystem.navMeshDrawer.DrawNumber(pos2d, i, cameraScaleMultiplier);
             }
         }
 
@@ -267,8 +269,7 @@ namespace TriangulationNavigation
             for (int i = 0; i < navigationSystem.navMesh.allTriangleCentroids.Count; i++)
             {
                 Float2 pos2d = navigationSystem.navMesh.allTriangleCentroids[i];
-                Vector3 pos = new Vector3(pos2d.x, 0.0f, pos2d.y) - new Vector3(1.5f, 0.0f, -3.5f) * cameraScaleMultiplier;
-                UnityEditor.Handles.Label(pos, $"{i}");
+                navigationSystem.navMeshDrawer.DrawNumber(pos2d, i, cameraScaleMultiplier);
             }
         }
     }

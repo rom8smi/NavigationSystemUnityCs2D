@@ -75,15 +75,15 @@ namespace TriangulationNavigation
         {
             if (agent.followingPath)
             {
-                DrawPath(agent.currentWaypointIndex, position, agent.waypoints, Color.black);
+                DrawPath(agent.currentWaypointIndex, position, agent.waypoints, agent.waypoints.Count, Color.black);
             }
         }
 
-        void DrawPath(int startIndex, Vector3 position, List<Float2> waypoints, Color color)
+        void DrawPath(int startIndex, Vector3 position, List<Float2> waypoints, int count, Color color)
         {
-            for (int i = startIndex; i < waypoints.Count; i++)
+            for (int i = startIndex; i < count; i++)
             {
-                Gizmos.color = Color.black;
+                Gizmos.color = color;
                 Vector3 currentWaypoint = new Vector3(waypoints[i].x, 0.0f, waypoints[i].y);
                 Gizmos.DrawCube(currentWaypoint, Vector3.one * 0.8f);
 

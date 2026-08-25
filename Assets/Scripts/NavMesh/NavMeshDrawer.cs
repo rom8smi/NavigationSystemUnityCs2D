@@ -99,6 +99,42 @@ namespace TriangulationNavigation
             }
         }
 
+        public void DrawNavMeshFunnelsGraph(NavMesh navMesh, Pathfinding pathfinding, bool displayFunnelGizmos, bool displayFunnelPointNumbers, float cameraScaleMultiplier)
+        {
+            if (displayFunnelGizmos)
+            {
+                Gizmos.color = new Color(0.5f, 0.05f, 0.05f, 1.0f);
+
+                for (int i = 0; i < pathfinding.nodePositions.Count; i++)
+                {
+                    Vector3 point = ToVector3(pathfinding.nodePositions[i]);
+                    Gizmos.DrawCube(point, Vector3.one * 0.5f * cameraScaleMultiplier);
+
+                    if(displayFunnelPointNumbers)
+                    {
+                        DrawNumber(pathfinding.nodePositions[i], i, cameraScaleMultiplier);
+                    }
+                }
+
+                for(int i=0; i<pathfinding.nodeNeighbours.Count; i++)
+                {
+                    for(int j=0; j<pathfinding.nodeNeighbours[i].Count; j++)
+                    {
+                        int neighbourIndex = pathfinding.nodeNeighbours[i][j];
+
+                        GizmoDrawer.DrawGizmosLine(pathfinding.nodePositions[i], pathfinding.nodePositions[neighbourIndex]);
+
+                        Float2 parallelDirection = (pathfinding.nodePositions[neighbourIndex] - pathfinding.nodePositions[i]).Normalized() * 3.0f;
+                        Float2 perpendicularDirection = VectorUtils.PerpendicularCounterClockwise(parallelDirection);
+
+                        GizmoDrawer.DrawGizmosLine(
+                            pathfinding.nodePositions[neighbourIndex] - 0.5f * (parallelDirection + perpendicularDirection),
+                            pathfinding.nodePositions[neighbourIndex]);
+                    }
+                }
+            }
+        }
+
         public void DrawObstaclePushDirections(NavMesh navMesh, bool displayPushDirections, List<Float2> positions, float size)
         {
             if (displayPushDirections)
@@ -121,6 +157,12 @@ namespace TriangulationNavigation
 
                 }
             }
+        }
+
+        public void DrawNumber(Float2 pos2d, int number, float cameraScaleMultiplier)
+        {
+            Vector3 pos = new Vector3(pos2d.x, 0.0f, pos2d.y) - new Vector3(1.5f, 0.0f, -3.5f) * cameraScaleMultiplier;
+            UnityEditor.Handles.Label(pos, $"{number}");
         }
     }
 }
