@@ -573,10 +573,17 @@ namespace TriangulationNavigation
                 int q = navMesh.delaunator.triangles[Delaunator.NextHalfedge(edgeIndex)];
 
                 Float2 perpendicularDirection = navMesh.allPoints[p] - nodePositions[currentWaypointIndex];
-                bool invertOrder = pathDirection.Cross(perpendicularDirection) < 0.0f;
 
-                leftPortalsEdgeIndices[i + 1] = invertOrder ? p : q;
-                rightPortalsEdgeIndices[i + 1] = invertOrder ? q : p;
+                if (pathDirection.Cross(perpendicularDirection) < 0.0f)
+                {
+                    leftPortalsEdgeIndices[i + 1] = p;
+                    rightPortalsEdgeIndices[i + 1] = q;
+                }
+                else
+                {
+                    leftPortalsEdgeIndices[i + 1] = q;
+                    rightPortalsEdgeIndices[i + 1] = p;
+                }
             }
 
             List<Float2> simplifiedWaypoints = new List<Float2>();
