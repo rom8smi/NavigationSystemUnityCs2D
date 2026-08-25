@@ -59,6 +59,8 @@ namespace TriangulationNavigation
             nodeNeighbours.Clear();
             additionalCosts.Clear();
             additionalCostsModified.Clear();
+            nodeEdgeRefsInverted.Clear();
+            nodeEdgeRefs.Clear();
 
             for (int i = 0; i < navMesh.allPoints.Count; i++)
             {
@@ -125,7 +127,9 @@ namespace TriangulationNavigation
             List<bool> repetitive = new List<bool>();
             List<int> nodeIndicesInTriangle = new List<int>();
 
-            for (int t = 0; t < navMesh.delaunator.trianglesLen / 3; t++)
+            int trianglesCount = navMesh.delaunator.trianglesLen / 3;
+
+            for (int t = 0; t < trianglesCount; t++)
             {
                 walkableIndices.Clear();
                 repetitive.Clear();
@@ -518,7 +522,11 @@ namespace TriangulationNavigation
             addedAdditionalCosts.Clear();
         }
 
-        void RetracePath(List<Float2> waypoints, List<int> waypointIndices, int startNode, int endNode)
+        void RetracePath(
+            List<Float2> waypoints,
+            List<int> waypointIndices,
+            int startNode,
+            int endNode)
         {
             int currentNode = endNode;
             Float2 waypointPosition;
@@ -536,7 +544,10 @@ namespace TriangulationNavigation
             waypointIndices.Add(startNode);
         }
 
-        void SimplifyPathEdges(List<Float2> waypoints, List<int> waypointIndices, NavMesh navMesh)
+        void SimplifyPathEdges(
+            List<Float2> waypoints,
+            List<int> waypointIndices,
+            NavMesh navMesh)
         {
             int waypointIndicesCount = waypointIndices.Count;
             if (waypointIndicesCount < 3)
@@ -716,14 +727,16 @@ namespace TriangulationNavigation
             }
         }
 
-        Float2 GetPortalPosition(int index, int vertId, List<Float2> waypoints, NavMesh navMesh)
+        Float2 GetPortalPosition(int index, int cornerIndex, List<Float2> waypoints, NavMesh navMesh)
         {
-            return vertId >= 0 ? navMesh.allPoints[vertId] : waypoints[index];
+            return cornerIndex >= 0 ? navMesh.allPoints[cornerIndex] : waypoints[index];
         }
 
         float Orient2D(Float2 a, Float2 b, Float2 c)
         {
-            return (b - a).Cross(c - a);
+            Float2 ba = b - a;
+            Float2 ca = c - a;
+            return ba.Cross(ca);
         }
 
         void SimplifyPathCorners(List<Float2> waypoints, NavMesh navMesh)
