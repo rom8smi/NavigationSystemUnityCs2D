@@ -231,11 +231,12 @@ namespace TriangulationNavigation
 
             if (!path.success && path.lowestHCostNode < nodesCount)
             {
-                Float2 newTargetPos = nodePositions[path.lowestHCostNode];
+                int lowestCostNode = path.lowestHCostNode;
+                Float2 newTargetPos = nodePositions[lowestCostNode];
 
                 if (triangleEdgesMode)
                 {
-                    int e = nodeEdgeRefsInverted[path.lowestHCostNode];
+                    int e = nodeEdgeRefsInverted[lowestCostNode];
                     if (e != -1)
                     {
                         int p = navMesh.delaunator.triangles[e];
@@ -250,15 +251,17 @@ namespace TriangulationNavigation
                         if (distanceSqrP < distanceSqrQ)
                         {
                             newTargetPos = newTargetPosP;
+                            lowestCostNode = p;
                         }
                         else
                         {
                             newTargetPos = newTargetPosQ;
+                            lowestCostNode = q;
                         }
                     }
                 }
 
-                newTargetPos = navMesh.FindNearestObstacleHullEdgePointToTarget(path.lowestHCostNode, newTargetPos, targetPos);
+                newTargetPos = navMesh.FindNearestObstacleHullEdgePointToTarget(lowestCostNode, newTargetPos, targetPos);
                 path = FindPathWithOrWithoutIterations(startPos, newTargetPos, navMesh);
             }
 
@@ -686,7 +689,7 @@ namespace TriangulationNavigation
 
                 Float2 currentLeftPosition;
                 GetPortalPosition(i, currentLeftCornerIndex, waypoints, navMesh, out currentLeftPosition);
-                
+
                 Float2 activeLeftPositionCurrent;
                 GetPortalPosition(leftIndex, activeLeftCornerIndex, waypoints, navMesh, out activeLeftPositionCurrent);
 
